@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  password          String
+  name              String
+  role              String    @default("EMPLOYEE")
+  preferredLanguage String    @default("ar")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  sales             Sale[]
+  purchases         Purchase[]
+  inventoryHistory  InventoryHistory[]
+}
+
+model Product {
+  id           String   @id @default(cuid())
+  nameEn       String
+  nameAr       String
+  sku          String   @unique
+  barcode      String?  @unique
+  quantity     Int      @default(0)
+  minQuantity  Int      @default(5)
+  costPrice    Float
+  sellingPrice Float
+  categoryId   String?
+  location     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  category     Category? @relation(fields: [categoryId], references: [id])
+  saleItems    SaleItem[]
+  purchaseItems PurchaseItem[]
+  inventoryHistory InventoryHistory[]
+}
+
+model Category {
+  id            String    @id @default(cuid())
+  nameEn        String
+  nameAr        String
+  descriptionEn String?
+  descriptionAr String?
+  products      Product[]
+  createdAt     DateTime  @default(now())
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  nameEn    String
+  nameAr    String
+  phone     String?
+  email     String?
+  address   String?
+  createdAt DateTime @default(now())
+  sales     Sale[]
+}
+
+model Sale {
+  id            String     @id @default(cuid())
+  invoiceNumber String     @unique
+  customerId    String?
+  userId        String
+  totalAmount   Float
+  discount      Float      @default(0)
+  tax           Float      @default(0)
+  netAmount     Float
+  paymentMethod String
+  createdAt     DateTime   @default(now())
+  
+  customer      Customer?  @relation(fields: [customerId], references: [id])
+  user          User       @relation(fields: [userId], references: [id])
+  items         SaleItem[]
+  returns       Return[]
+}
+
+model SaleItem {
+  id        String   @id @default(cuid())
+  saleId    String
+  productId String
+  quantity  Int
+  price     Float
+  total     Float
+  
+  sale      Sale     @relation(fields: [saleId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+}
+
+model Purchase {
+  id            String         @id @default(cuid())
+  invoiceNumber String         @unique
+  userId        String
+  totalAmount   Float
+  createdAt     DateTime       @default(now())
+  
+  user          User           @relation(fields: [userId], references: [id])
+  items         PurchaseItem[]
+}
+
+model PurchaseItem {
+  id         String   @id @default(cuid())
+  purchaseId String
+  productId  String
+  quantity   Int
+  price      Float
+  
+  purchase   Purchase @relation(fields: [purchaseId], references: [id])
+  product    Product  @relation(fields: [productId], references: [id])
+}
+
+model Return {
+  id        String   @id @default(cuid())
+  saleId    String
+  reason    String?
+  createdAt DateTime @default(now())
+  sale      Sale     @relation(fields: [saleId], references: [id])
+}
+
+model InventoryHistory {
+  id               String   @id @default(cuid())
+  productId        String
+  userId           String
+  action           String
+  previousQuantity Int
+  newQuantity      Int
+  reason           String?
+  timestamp        DateTime @default(now())
+  
+  product          Product  @relation(fields: [productId], references: [id])
+  user             User     @relation(fields: [userId], references: [id])
+}
