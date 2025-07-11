@@ -1,6 +1,7 @@
+// src/routes/auth/login/+page.server.ts
 import type { Actions, PageServerLoad } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
-import { lucia } from '$lib/server/auth';
+import { createSessionToken } from '$lib/server/auth';
 import { prisma } from '$lib/server/db';
 import bcrypt from 'bcrypt';
 import { loginSchema } from '$lib/utils/validators';
@@ -32,11 +33,15 @@ export const actions: Actions = {
         });
       }
 
-      const session = await lucia.createSession(user.id, {});
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      cookies.set(sessionCookie.name, sessionCookie.value, {
-        path: ".",
-        ...sessionCookie.attributes
+      // Create session token
+      const sessionToken = createSessionToken(user.id);
+      
+      cookies.set('session', sessionToken, {
+        path: '/',
+        httpOnly: true,
+        secure: false, // Set to true in production
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7 // 7 days
       });
 
       throw redirect(302, '/dashboard');
