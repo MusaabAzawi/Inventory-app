@@ -1,5 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Arabic:wght@300;400;500;600;700&display=swap');
-/* @tailwind directives require Tailwind CSS processing. 
+@import "tailwindcss";
+
+/* Your existing styles from the updated CSS artifact I provided *//* @tailwind directives require Tailwind CSS processing. 
    Uncomment the lines below if your build process supports Tailwind CSS. */
 
 /* @tailwind base; */
