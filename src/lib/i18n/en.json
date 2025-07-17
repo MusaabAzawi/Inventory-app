@@ -187,6 +187,9 @@
     "subtotal": "Subtotal",
     "language": "Language",
     "english": "English",
-    "arabic": "Arabic"
+    "arabic": "Arabic",
+    "noResults": "No results found",
+    "noData": "No data available",
+    "update": "Update"
   }
 }
