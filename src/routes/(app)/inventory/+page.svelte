@@ -1,8 +1,7 @@
-<!-- src/routes/(app)/inventory/+page.svelte -->
 <script lang="ts">
   import { _ } from 'svelte-i18n';
   import { locale } from 'svelte-i18n';
-  import { Plus, Search, Barcode, Download } from 'lucide-svelte';
+  import { Plus, Search, Barcode, Download, Scan } from 'lucide-svelte';
   import type { PageData } from './$types';
   import ProductList from '$lib/components/products/ProductList.svelte';
   import BarcodeScanner from '$lib/components/barcode/BarcodeScanner.svelte';
@@ -12,38 +11,64 @@
   let showScanner = false;
   let searchQuery = '';
   let selectedCategory = '';
+  let scanResult = '';
   
   async function handleBarcodeScan(barcode: string) {
+    scanResult = barcode;
+    showScanner = false;
+    
     try {
       const response = await fetch(`/api/products/barcode/${barcode}`);
-      if (response.ok) {
-        const product = await response.json();
-        // Navigate to product or show details
-        window.location.href = `/inventory/products/${product.id}`;
+      const result = await response.json();
+      
+      if (result.success && result.product) {
+        // Product found - highlight it or navigate to it
+        const productName = $locale === 'ar' ? result.product.nameAr : result.product.nameEn;
+        
+        if (confirm(`Product found: "${productName}" (${result.product.sku})\n\nOpen product details?`)) {
+          window.location.href = `/inventory/products/${result.product.id}`;
+        } else {
+          // Set search to highlight the product
+          searchQuery = result.product.sku;
+        }
       } else {
-        alert('Product not found');
+        // Product not found - offer to create new one
+        if (confirm(`Product with barcode "${barcode}" not found.\n\nCreate new product with this barcode?`)) {
+          window.location.href = `/inventory/products/new?barcode=${encodeURIComponent(barcode)}`;
+        }
       }
     } catch (error) {
-      console.error('Barcode scan error:', error);
-      alert('Error scanning barcode');
+      console.error('Barcode lookup error:', error);
+      alert('Error looking up product. Please try again.');
     }
-    showScanner = false;
+  }
+  
+  function openBarcodeScanner() {
+    showScanner = true;
   }
 </script>
 
 <div class="space-y-6">
   <!-- Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-    <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
-      {$_('modules.inventory.title')}
-    </h1>
+    <div>
+      <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
+        {$_('modules.inventory.title')}
+      </h1>
+      {#if scanResult}
+        <p class="text-sm text-gray-500 mt-1">
+          Last scanned: {scanResult}
+        </p>
+      {/if}
+    </div>
     
     <div class="flex gap-2">
+      <!-- Barcode Scanner Button -->
       <button
-        on:click={() => showScanner = true}
+        on:click={openBarcodeScanner}
         class="btn-secondary btn-md"
       >
-        <Barcode class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+        <Scan class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
         {$_('modules.inventory.scanBarcode')}
       </button>
       
@@ -89,9 +114,11 @@
   </div>
 </div>
 
+<!-- Barcode Scanner Modal -->
 {#if showScanner}
   <BarcodeScanner
     onScan={handleBarcodeScan}
     onClose={() => showScanner = false}
+    title="Scan to Find Product"
   />
 {/if}

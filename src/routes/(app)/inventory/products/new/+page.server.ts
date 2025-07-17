@@ -1,20 +1,24 @@
-// src/routes/(app)/inventory/products/new/+page.server.ts
 import type { Actions, PageServerLoad } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
 import { prisma } from '$lib/server/db';
 import { productSchema } from '$lib/utils/validators';
 import { z } from 'zod';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ url }) => {
   const categories = await prisma.category.findMany({
     orderBy: { nameEn: 'asc' }
   });
 
+  // Get barcode from URL if passed from scanner
+  const barcodeFromUrl = url.searchParams.get('barcode');
+
   return {
-    categories
+    categories,
+    initialBarcode: barcodeFromUrl
   };
 };
 
+// ... rest of the actions remain the same
 export const actions: Actions = {
   default: async ({ request, locals }) => {
     if (!locals.user) {

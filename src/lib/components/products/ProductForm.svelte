@@ -2,12 +2,41 @@
   import { _ } from 'svelte-i18n';
   import { enhance } from '$app/forms';
   import { locale } from 'svelte-i18n';
+  import { Scan } from 'lucide-svelte';
+  import BarcodeScanner from '$lib/components/barcode/BarcodeScanner.svelte';
   
   export let product: any = null;
   export let categories: any[] = [];
   export let form: any = null;
   
   const isEdit = !!product?.id;
+  
+  let showBarcodeScanner = false;
+  let barcodeValue = form?.barcode ?? product?.barcode ?? '';
+
+  function handleBarcodeScan(barcode: string) {
+    barcodeValue = barcode;
+    showBarcodeScanner = false;
+    
+    // Also check if product with this barcode already exists
+    checkExistingBarcode(barcode);
+  }
+
+  async function checkExistingBarcode(barcode: string) {
+    if (!barcode || barcode === product?.barcode) return;
+    
+    try {
+      const response = await fetch(`/api/products/barcode/${barcode}`);
+      const result = await response.json();
+      
+      if (result.success && result.product) {
+        const productName = $locale === 'ar' ? result.product.nameAr : result.product.nameEn;
+        alert(`⚠️ Warning: This barcode is already used by product "${productName}" (${result.product.sku})`);
+      }
+    } catch (error) {
+      console.error('Error checking barcode:', error);
+    }
+  }
 </script>
 
 <form method="POST" use:enhance class="space-y-6">
@@ -59,16 +88,30 @@
       />
     </div>
 
-    <!-- Barcode -->
+    <!-- Barcode with Scanner -->
     <div>
       <label for="barcode" class="label">{$_('product.barcode')}</label>
-      <input
-        id="barcode"
-        name="barcode"
-        type="text"
-        class="input"
-        value={form?.barcode ?? product?.barcode ?? ''}
-      />
+      <div class="flex gap-2">
+        <input
+          id="barcode"
+          name="barcode"
+          type="text"
+          bind:value={barcodeValue}
+          class="input flex-1"
+          placeholder="Scan or enter manually"
+        />
+        <button
+          type="button"
+          on:click={() => showBarcodeScanner = true}
+          class="btn-secondary btn-md px-3"
+          title="Scan Barcode"
+        >
+          <Scan class="w-4 h-4" />
+        </button>
+      </div>
+      {#if barcodeValue}
+        <p class="text-xs text-gray-500 mt-1">Barcode: {barcodeValue}</p>
+      {/if}
     </div>
 
     <!-- Category -->
@@ -98,6 +141,7 @@
         type="text"
         class="input"
         value={form?.location ?? product?.location ?? ''}
+        placeholder="e.g., Aisle 3, Shelf B"
       />
     </div>
 
@@ -169,3 +213,12 @@
     </button>
   </div>
 </form>
+
+<!-- Barcode Scanner Modal -->
+{#if showBarcodeScanner}
+  <BarcodeScanner
+    onScan={handleBarcodeScan}
+    onClose={() => showBarcodeScanner = false}
+    title="Scan Product Barcode"
+  />
+{/if}
