@@ -1,67 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "sqlite"
-  url      = "file:./dev.db"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id                String    @id @default(cuid())
-  email             String    @unique
+  id                String              @id @default(cuid())
+  email             String              @unique
   password          String
   name              String
-  role              String    @default("EMPLOYEE")
-  preferredLanguage String    @default("ar")
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  
+  role              String              @default("USER")
+  preferredLanguage String              @default("ar")
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
   sales             Sale[]
   purchases         Purchase[]
+  cashTransactions  CashTransaction[]
   inventoryHistory  InventoryHistory[]
-}
-
-model Product {
-  id           String   @id @default(cuid())
-  nameEn       String
-  nameAr       String
-  sku          String   @unique
-  barcode      String?  @unique
-  quantity     Int      @default(0)
-  minQuantity  Int      @default(5)
-  costPrice    Float
-  sellingPrice Float
-  categoryId   String?
-  location     String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
-  category     Category? @relation(fields: [categoryId], references: [id])
-  saleItems    SaleItem[]
-  purchaseItems PurchaseItem[]
-  inventoryHistory InventoryHistory[]
 }
 
 model Category {
   id            String    @id @default(cuid())
-  nameEn        String
-  nameAr        String
+  nameEn        String    @unique
+  nameAr        String    @unique
   descriptionEn String?
   descriptionAr String?
-  products      Product[]
   createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  products      Product[]
+}
+
+model Product {
+  id               String             @id @default(cuid())
+  nameEn           String
+  nameAr           String
+  sku              String             @unique
+  barcode          String?            @unique
+  quantity         Int                @default(0)
+  minQuantity      Int                @default(5)
+  costPrice        Float
+  sellingPrice     Float
+  categoryId       String?
+  location         String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  category         Category?          @relation(fields: [categoryId], references: [id])
+  saleItems        SaleItem[]
+  purchaseItems    PurchaseItem[]
+  inventoryHistory InventoryHistory[]
 }
 
 model Customer {
   id        String   @id @default(cuid())
   nameEn    String
   nameAr    String
-  phone     String?
-  email     String?
+  phone     String?  @unique
+  email     String?  @unique
   address   String?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   sales     Sale[]
+}
+
+model Supplier {
+  id        String     @id @default(cuid())
+  nameEn    String
+  nameAr    String
+  phone     String?    @unique
+  email     String?    @unique
+  address   String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  purchases Purchase[]
 }
 
 model Sale {
@@ -69,17 +85,18 @@ model Sale {
   invoiceNumber String     @unique
   customerId    String?
   userId        String
-  totalAmount   Float
+  subtotal      Float
   discount      Float      @default(0)
   tax           Float      @default(0)
   netAmount     Float
   paymentMethod String
+  paymentStatus String     @default("PAID")
+  notes         String?
   createdAt     DateTime   @default(now())
-  
+  updatedAt     DateTime   @updatedAt
   customer      Customer?  @relation(fields: [customerId], references: [id])
   user          User       @relation(fields: [userId], references: [id])
   items         SaleItem[]
-  returns       Return[]
 }
 
 model SaleItem {
@@ -89,20 +106,28 @@ model SaleItem {
   quantity  Int
   price     Float
   total     Float
-  
-  sale      Sale     @relation(fields: [saleId], references: [id])
+  createdAt DateTime @default(now())
+  sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
   product   Product  @relation(fields: [productId], references: [id])
 }
 
 model Purchase {
-  id            String         @id @default(cuid())
-  invoiceNumber String         @unique
-  userId        String
-  totalAmount   Float
-  createdAt     DateTime       @default(now())
-  
-  user          User           @relation(fields: [userId], references: [id])
-  items         PurchaseItem[]
+  id             String         @id @default(cuid())
+  invoiceNumber  String         @unique
+  supplierId     String?
+  userId         String
+  subtotal       Float
+  discount       Float          @default(0)
+  tax            Float          @default(0)
+  netAmount      Float
+  paymentMethod  String
+  paymentStatus  String         @default("PENDING")
+  notes          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  supplier       Supplier?      @relation(fields: [supplierId], references: [id])
+  user           User           @relation(fields: [userId], references: [id])
+  items          PurchaseItem[]
 }
 
 model PurchaseItem {
@@ -111,29 +136,60 @@ model PurchaseItem {
   productId  String
   quantity   Int
   price      Float
-  
-  purchase   Purchase @relation(fields: [purchaseId], references: [id])
+  total      Float
+  createdAt  DateTime @default(now())
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
   product    Product  @relation(fields: [productId], references: [id])
 }
 
-model Return {
-  id        String   @id @default(cuid())
-  saleId    String
-  reason    String?
-  createdAt DateTime @default(now())
-  sale      Sale     @relation(fields: [saleId], references: [id])
+model Account {
+  id               String            @id @default(cuid())
+  accountNumber    String            @unique
+  nameEn           String
+  nameAr           String
+  type             String // CUSTOMER, SUPPLIER, EXPENSE, REVENUE, BANK, CASH
+  balance          Float             @default(0)
+  currency         String            @default("USD")
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  cashTransactions CashTransaction[]
+}
+
+model CashTransaction {
+  id            String   @id @default(cuid())
+  type          String // RECEIPT, PAYMENT, SALARY, EXPENSE, TRANSFER
+  amount        Float
+  currency      String   @default("USD")
+  exchangeRate  Float    @default(1)
+  accountId     String
+  userId        String
+  description   String?
+  referenceNo   String?  @unique
+  attachmentUrl String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  account       Account  @relation(fields: [accountId], references: [id])
+  user          User     @relation(fields: [userId], references: [id])
 }
 
 model InventoryHistory {
   id               String   @id @default(cuid())
   productId        String
   userId           String
-  action           String
+  action           String // INITIAL_STOCK, SALE, PURCHASE, ADJUSTMENT, DAMAGE, RETURN
   previousQuantity Int
   newQuantity      Int
+  quantityChange   Int
   reason           String?
   timestamp        DateTime @default(now())
-  
   product          Product  @relation(fields: [productId], references: [id])
   user             User     @relation(fields: [userId], references: [id])
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
