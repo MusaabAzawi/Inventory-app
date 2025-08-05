@@ -1,3 +1,4 @@
+<!-- src/routes/(app)/reports/+page.svelte -->
 <script lang="ts">
   import { _ } from 'svelte-i18n';
   import { locale } from 'svelte-i18n';
@@ -84,8 +85,8 @@
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
       <!-- Report Type -->
       <div>
-        <label class="label">Report Type</label>
-        <select bind:value={reportType} class="input">
+        <label for="report-type-select" class="label">Report Type</label>
+        <select id="report-type-select" bind:value={reportType} class="input">
           {#each reportTypes as type}
             <option value={type.id}>{type.label}</option>
           {/each}
@@ -94,14 +95,14 @@
 
       <!-- Start Date -->
       <div>
-        <label class="label">Start Date</label>
-        <input type="date" bind:value={startDate} class="input" />
+        <label for="start-date-input" class="label">Start Date</label>
+        <input id="start-date-input" type="date" bind:value={startDate} class="input" />
       </div>
 
       <!-- End Date -->
       <div>
-        <label class="label">End Date</label>
-        <input type="date" bind:value={endDate} class="input" />
+        <label for="end-date-input" class="label">End Date</label>
+        <input id="end-date-input" type="date" bind:value={endDate} class="input" />
       </div>
 
       <!-- Generate Button -->
@@ -109,12 +110,17 @@
         <button
           on:click={generateReport}
           class="btn-primary btn-md w-full"
+          aria-describedby="generate-report-description"
         >
           <Filter class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
           Generate
         </button>
       </div>
     </div>
+    
+    <p id="generate-report-description" class="sr-only">
+      Generate a report based on the selected type and date range
+    </p>
   </div>
 
   <!-- Report Content -->
@@ -125,7 +131,7 @@
       <div class="bg-white rounded-lg shadow p-6 dark:bg-gray-800">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Sales Summary</h3>
-          <ShoppingCart class="h-5 w-5 text-gray-400" />
+          <ShoppingCart class="h-5 w-5 text-gray-400" aria-hidden="true" />
         </div>
         <div class="space-y-2">
           <div class="flex justify-between">
@@ -143,7 +149,7 @@
       <div class="bg-white rounded-lg shadow p-6 dark:bg-gray-800">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Inventory Summary</h3>
-          <Package class="h-5 w-5 text-gray-400" />
+          <Package class="h-5 w-5 text-gray-400" aria-hidden="true" />
         </div>
         <div class="space-y-2">
           <div class="flex justify-between">
@@ -161,7 +167,7 @@
       <div class="bg-white rounded-lg shadow p-6 dark:bg-gray-800">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Performance</h3>
-          <TrendingUp class="h-5 w-5 text-gray-400" />
+          <TrendingUp class="h-5 w-5 text-gray-400" aria-hidden="true" />
         </div>
         <div class="space-y-2">
           <div class="flex justify-between">
@@ -179,12 +185,12 @@
       <div class="bg-white rounded-lg shadow p-6 dark:bg-gray-800">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Selling Products</h3>
         <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700" role="table">
             <thead>
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Product</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Quantity Sold</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Revenue</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Product</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Quantity Sold</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Revenue</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -221,14 +227,14 @@
       
       {#if data.data?.sales?.length}
         <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700" role="table">
             <thead class="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Invoice</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Customer</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Date</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Amount</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Staff</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Invoice</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Customer</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Date</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Amount</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Staff</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
@@ -267,7 +273,7 @@
 
   {:else}
     <div class="bg-white rounded-lg shadow p-6 dark:bg-gray-800 text-center">
-      <FileText class="mx-auto h-12 w-12 text-gray-300 mb-4" />
+      <FileText class="mx-auto h-12 w-12 text-gray-300 mb-4" aria-hidden="true" />
       <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Report Not Available</h3>
       <p class="text-gray-500 dark:text-gray-400">This report type is not yet implemented.</p>
     </div>
