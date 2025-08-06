@@ -4,16 +4,20 @@ import { fail, redirect } from '@sveltejs/kit';
 import { prisma } from '$lib/server/db';
 import { z } from 'zod';
 
+const saleItemSchema = z.object({
+  productId: z.string().min(1, 'Product is required'),
+  quantity: z.number().int().positive('Quantity must be positive'),
+  price: z.number().positive('Price must be positive')
+});
+
 const saleSchema = z.object({
   customerId: z.string().optional(),
-  items: z.array(z.object({
-    productId: z.string(),
-    quantity: z.number().int().positive(),
-    price: z.number().positive()
-  })).min(1, 'At least one item is required'),
-  discount: z.number().min(0).default(0),
-  tax: z.number().min(0).default(0),
-  paymentMethod: z.string().min(1),
+  items: z.array(saleItemSchema).min(1, 'At least one item is required'),
+  discount: z.number().min(0, 'Discount cannot be negative').default(0),
+  tax: z.number().min(0, 'Tax cannot be negative').default(0),
+  paymentMethod: z.enum(['CASH', 'CREDIT', 'CARD'], {
+    errorMap: () => ({ message: 'Please select a valid payment method' })
+  }),
   notes: z.string().optional()
 });
 
@@ -57,37 +61,57 @@ export const actions: Actions = {
       return fail(401, { error: 'Unauthorized' });
     }
 
-    const formData = await request.formData();
-    
     try {
-      // Parse items from form data
-      const itemsData = JSON.parse(formData.get('items')?.toString() || '[]');
+      const formData = await request.formData();
       
+      // Parse and validate items
+      let itemsData;
+      try {
+        const itemsString = formData.get('items')?.toString();
+        if (!itemsString) {
+          return fail(400, { error: 'No items provided' });
+        }
+        itemsData = JSON.parse(itemsString);
+      } catch (parseError) {
+        return fail(400, { error: 'Invalid items data format' });
+      }
+
+      // Prepare data for validation
       const data = {
         customerId: formData.get('customerId')?.toString() || undefined,
-        items: itemsData,
-        discount: parseFloat(formData.get('discount')?.toString() || '0'),
-        tax: parseFloat(formData.get('tax')?.toString() || '0'),
+        items: itemsData.map((item: any) => ({
+          productId: item.productId || '',
+          quantity: Number(item.quantity) || 0,
+          price: Number(item.price) || 0
+        })),
+        discount: Number(formData.get('discount')?.toString() || '0'),
+        tax: Number(formData.get('tax')?.toString() || '0'),
         paymentMethod: formData.get('paymentMethod')?.toString() || '',
         notes: formData.get('notes')?.toString() || undefined
       };
 
-      const validatedData = saleSchema.parse(data);
+      // Validate the data
+      const validationResult = saleSchema.safeParse(data);
+      if (!validationResult.success) {
+        const errors = validationResult.error.errors.map(err => `${err.path.join('.')}: ${err.message}`);
+        return fail(400, {
+          error: 'Validation failed: ' + errors.join(', '),
+          formData: data
+        });
+      }
 
-      // Generate invoice number
-      const lastSale = await prisma.sale.findFirst({
-        orderBy: { createdAt: 'desc' },
-        select: { invoiceNumber: true }
-      });
+      const validatedData = validationResult.data;
 
-      const lastNumber = lastSale ? parseInt(lastSale.invoiceNumber.replace(/\D/g, '')) : 0;
-      const invoiceNumber = `INV-${String(lastNumber + 1).padStart(6, '0')}`;
+      // Generate unique invoice number
+      const timestamp = Date.now();
+      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      const invoiceNumber = `INV-${timestamp}-${random}`;
 
-      // Calculate totals
+      // Validate products and calculate totals
       let totalAmount = 0;
       const itemsWithTotals = [];
 
-      for (const item of validatedData.items) {
+      for (const [index, item] of validatedData.items.entries()) {
         // Verify product exists and has sufficient quantity
         const product = await prisma.product.findUnique({
           where: { id: item.productId }
@@ -95,15 +119,22 @@ export const actions: Actions = {
 
         if (!product) {
           return fail(400, {
-            ...data,
-            error: `Product not found: ${item.productId}`
+            error: `Product not found for item ${index + 1}`,
+            formData: data
+          });
+        }
+
+        if (!product.isActive) {
+          return fail(400, {
+            error: `Product "${product.nameEn}" is not active`,
+            formData: data
           });
         }
 
         if (product.quantity < item.quantity) {
           return fail(400, {
-            ...data,
-            error: `Insufficient stock for ${product.nameEn}. Available: ${product.quantity}, Requested: ${item.quantity}`
+            error: `Insufficient stock for "${product.nameEn}". Available: ${product.quantity}, Requested: ${item.quantity}`,
+            formData: data
           });
         }
 
@@ -114,16 +145,24 @@ export const actions: Actions = {
           productId: item.productId,
           quantity: item.quantity,
           price: item.price,
-          total: itemTotal
+          total: itemTotal,
+          product: product
         });
       }
 
       const netAmount = totalAmount - validatedData.discount + validatedData.tax;
 
-      // Create sale in transaction
-      const result = await prisma.$transaction(async (tx) => {
-        // Create sale
-        const sale = await tx.sale.create({
+      if (netAmount < 0) {
+        return fail(400, {
+          error: 'Net amount cannot be negative. Please check discount amount.',
+          formData: data
+        });
+      }
+
+      // Create sale in transaction - this ensures data consistency
+      const sale = await prisma.$transaction(async (tx) => {
+        // Create the sale record
+        const newSale = await tx.sale.create({
           data: {
             invoiceNumber,
             customerId: validatedData.customerId || null,
@@ -133,7 +172,8 @@ export const actions: Actions = {
             tax: validatedData.tax,
             netAmount,
             paymentMethod: validatedData.paymentMethod,
-            notes: validatedData.notes
+            notes: validatedData.notes,
+            status: 'COMPLETED'
           }
         });
 
@@ -142,7 +182,7 @@ export const actions: Actions = {
           // Create sale item
           await tx.saleItem.create({
             data: {
-              saleId: sale.id,
+              saleId: newSale.id,
               productId: item.productId,
               quantity: item.quantity,
               price: item.price,
@@ -151,7 +191,7 @@ export const actions: Actions = {
           });
 
           // Update product quantity
-          const product = await tx.product.update({
+          const updatedProduct = await tx.product.update({
             where: { id: item.productId },
             data: {
               quantity: { decrement: item.quantity }
@@ -164,33 +204,49 @@ export const actions: Actions = {
               productId: item.productId,
               userId: locals.user!.id,
               action: 'SALE',
-              previousQuantity: product.quantity + item.quantity,
-              newQuantity: product.quantity,
+              previousQuantity: updatedProduct.quantity + item.quantity,
+              newQuantity: updatedProduct.quantity,
               quantityChange: -item.quantity,
-              reason: `Sale invoice: ${invoiceNumber}`,
-              referenceId: sale.id
+              reason: `Sale - Invoice: ${invoiceNumber}`,
+              referenceId: newSale.id
             }
           });
         }
 
-        return sale;
+        return newSale;
       });
 
-      throw redirect(302, `/sales/${result.id}`);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return fail(400, {
-          error: 'Validation failed: ' + error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
-        });
-      }
+      // Success - redirect to sales list (since we don't have sale detail page yet)
+      throw redirect(302, '/sales');
       
-      if (error instanceof Error && 'status' in error) {
-        throw error;
+    } catch (error) {
+      // Handle redirect separately - don't treat it as an error
+      if (error && typeof error === 'object' && 'status' in error && error.status === 302) {
+        throw error; // Re-throw redirect
       }
 
       console.error('Sale creation error:', error);
+      
+      // Handle specific database errors
+      if (error && typeof error === 'object' && 'code' in error) {
+        switch (error.code) {
+          case 'P2002': // Unique constraint violation
+            return fail(400, {
+              error: 'Invoice number already exists. Please try again.',
+            });
+          case 'P2025': // Record not found
+            return fail(400, {
+              error: 'One or more selected products no longer exist.',
+            });
+          default:
+            return fail(500, {
+              error: 'Database error occurred while creating the sale.',
+            });
+        }
+      }
+
       return fail(500, {
-        error: 'Failed to create sale'
+        error: 'An unexpected error occurred while creating the sale. Please try again.',
       });
     }
   }

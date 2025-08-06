@@ -115,22 +115,55 @@
         notifications.success('Sale Created', 'Sale has been created successfully');
       } else if (result.type === 'failure') {
         notifications.error('Sale Failed', result.data?.error || 'Failed to create sale');
+        // Update the form to show errors
         await update();
       } else if (result.type === 'redirect') {
         notifications.success('Sale Created', 'Sale has been created successfully');
+        // Redirect will happen automatically
       }
     };
   }
 
   function validateForm() {
+    // Check if we have any items
     if (items.length === 0) {
       notifications.error('Validation Error', 'Please add at least one item to the sale');
       return false;
     }
     
+    // Check if all items have products selected
+    const itemsWithoutProducts = items.filter(item => !item.productId);
+    if (itemsWithoutProducts.length > 0) {
+      notifications.error('Validation Error', 'Please select a product for all items');
+      return false;
+    }
+    
+    // Check if all items have valid quantities
+    const itemsWithInvalidQty = items.filter(item => !item.quantity || item.quantity <= 0);
+    if (itemsWithInvalidQty.length > 0) {
+      notifications.error('Validation Error', 'Please enter valid quantities for all items');
+      return false;
+    }
+    
+    // Check if all items have valid prices
+    const itemsWithInvalidPrice = items.filter(item => !item.price || item.price <= 0);
+    if (itemsWithInvalidPrice.length > 0) {
+      notifications.error('Validation Error', 'Please enter valid prices for all items');
+      return false;
+    }
+    
+    // Check payment method
     if (!saleData.paymentMethod) {
       notifications.error('Validation Error', 'Please select a payment method');
       return false;
+    }
+    
+    // Check stock availability
+    for (const item of items) {
+      if (item.product && item.product.quantity < item.quantity) {
+        notifications.error('Stock Error', `Insufficient stock for ${item.product.nameEn}. Available: ${item.product.quantity}, Requested: ${item.quantity}`);
+        return false;
+      }
     }
     
     return true;
@@ -426,7 +459,7 @@
       productId: item.productId,
       quantity: item.quantity,
       price: item.price
-    })))} />
+    })).filter(item => item.productId && item.quantity > 0 && item.price > 0))} />
   </form>
 </div>
 
