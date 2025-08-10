@@ -33,8 +33,27 @@
 
 <!-- Mobile sidebar overlay -->
 {#if sidebarOpen}
-  <div class="md:hidden fixed inset-0 z-40 bg-black bg-opacity-50" on:click={() => sidebarOpen = false}>
-    <div class="w-64 bg-white h-full dark:bg-gray-800">
+  <div 
+    class="md:hidden fixed inset-0 z-40 bg-black bg-opacity-50" 
+    on:click={() => sidebarOpen = false}
+    on:keydown={(e) => {
+      if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        sidebarOpen = false;
+      }
+    }}
+    role="button"
+    tabindex="0"
+    aria-label="Close sidebar"
+  >
+    <div
+      class="w-64 bg-white h-full dark:bg-gray-800"
+      on:click|stopPropagation
+      on:keydown|stopPropagation
+      role="dialog"
+      aria-modal="true"
+      tabindex="0"
+    >
       <Sidebar bind:open={sidebarOpen} />
     </div>
   </div>

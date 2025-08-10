@@ -16,8 +16,8 @@
     { key: 'createdAt', label: 'common.date', sortable: true }
   ];
 
-  function formatDate(date: string) {
-    return new Date(date).toLocaleDateString($locale === 'ar' ? 'ar-SA' : 'en-US');
+  function formatDate(date: string | Date) {
+    return new Date(typeof date === 'string' ? date : date.toISOString()).toLocaleDateString($locale === 'ar' ? 'ar-SA' : 'en-US');
   }
 
   function confirmDelete(category: any) {
@@ -56,8 +56,8 @@
   </div>
 
   <!-- Categories Table -->
-  <DataTable {data}={data.categories} {columns}>
-    <div slot="row" let:item>
+  <DataTable data={data.categories} {columns}>
+    <tr slot="row" let:item>
       <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
         {item.nameEn}
       </td>
@@ -73,9 +73,9 @@
       <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
         {formatDate(item.createdAt)}
       </td>
-    </div>
+    </tr>
 
-    <div slot="actions" let:item>
+    <td slot="actions" let:item>
       <div class="flex gap-2">
         <a href="/categories/{item.id}" class="text-blue-600 hover:text-blue-900">
           <Edit class="h-4 w-4" />
@@ -88,6 +88,6 @@
           <Trash2 class="h-4 w-4" />
         </button>
       </div>
-    </div>
+    </td>
   </DataTable>
 </div>
