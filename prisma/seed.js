@@ -1,8 +1,8 @@
-// scripts/setup.ts
-// Run with: npx tsx scripts/setup.ts
+// prisma/seed.js
+// Run with: npx prisma db seed
 
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs'; // Use bcryptjs for better compatibility
 
 const prisma = new PrismaClient();
 
@@ -26,7 +26,7 @@ async function main() {
 
   console.log('✅ Admin user created:', adminUser.email);
 
-  // Create sample categories (using findFirst + create pattern since unique constraints may not be applied yet)
+  // Create sample categories
   const categoryData = [
     {
       nameEn: 'Electronics',
@@ -50,22 +50,17 @@ async function main() {
 
   const categories = [];
   for (const catData of categoryData) {
-    // Check if category already exists
-    let category = await prisma.category.findFirst({
-      where: { nameEn: catData.nameEn }
+    const category = await prisma.category.upsert({
+      where: { nameEn: catData.nameEn },
+      update: {},
+      create: catData
     });
-    
-    if (!category) {
-      category = await prisma.category.create({
-        data: catData
-      });
-    }
     categories.push(category);
   }
 
   console.log('✅ Categories created:', categories.length);
 
-  // Create sample products
+  // Create sample products with decimal values
   const productData = [
     {
       nameEn: 'Gaming Laptop',
@@ -118,66 +113,92 @@ async function main() {
 
   const products = [];
   for (const prodData of productData) {
-    // Check if product already exists
-    let product = await prisma.product.findFirst({
-      where: { sku: prodData.sku }
+    const product = await prisma.product.upsert({
+      where: { sku: prodData.sku },
+      update: {},
+      create: prodData
     });
-    
-    if (!product) {
-      product = await prisma.product.create({
-        data: prodData
-      });
-    }
     products.push(product);
   }
 
   console.log('✅ Products created:', products.length);
 
   // Create sample customer
-  let customer = await prisma.customer.findFirst({
-    where: { email: 'john@example.com' }
+  const customer = await prisma.customer.upsert({
+    where: { email: 'john@example.com' },
+    update: {},
+    create: {
+      nameEn: 'John Doe',
+      nameAr: 'جون دو',
+      phone: '+1234567890',
+      email: 'john@example.com',
+      address: '123 Main St, City'
+    }
   });
-  
-  if (!customer) {
-    customer = await prisma.customer.create({
-      data: {
-        nameEn: 'John Doe',
-        nameAr: 'جون دو',
-        phone: '+1234567890',
-        email: 'john@example.com',
-        address: '123 Main St, City'
-      }
-    });
-  }
 
   console.log('✅ Sample customer created:', customer.nameEn);
 
+  // Create sample supplier
+  const supplier = await prisma.supplier.upsert({
+    where: { email: 'supplier@techcorp.com' },
+    update: {},
+    create: {
+      nameEn: 'TechCorp Suppliers',
+      nameAr: 'موردين تك كورب',
+      phone: '+1-555-0100',
+      email: 'supplier@techcorp.com',
+      address: '123 Supplier Street, Business District'
+    }
+  });
+
+  console.log('✅ Sample supplier created:', supplier.nameEn);
+
   // Add inventory history for all products
   for (const product of products) {
-    // Check if inventory history already exists for this product
-    const existingHistory = await prisma.inventoryHistory.findFirst({
-      where: { 
-        productId: product.id,
-        action: 'INITIAL_STOCK'
-      }
-    });
-    
-    if (!existingHistory && product.quantity > 0) {
-      await prisma.inventoryHistory.create({
-        data: {
+    if (product.quantity > 0) {
+      const existingHistory = await prisma.inventoryHistory.findFirst({
+        where: { 
           productId: product.id,
-          userId: adminUser.id,
-          action: 'INITIAL_STOCK',
-          previousQuantity: 0,
-          newQuantity: product.quantity,
-          quantityChange: product.quantity,
-          reason: 'Initial setup'
+          action: 'INITIAL_STOCK'
         }
       });
+
+      if (!existingHistory) {
+        await prisma.inventoryHistory.create({
+          data: {
+            productId: product.id,
+            userId: adminUser.id,
+            action: 'INITIAL_STOCK',
+            previousQuantity: 0,
+            newQuantity: product.quantity,
+            quantityChange: product.quantity,
+            reason: 'Initial setup'
+          }
+        });
+      }
     }
   }
 
   console.log('✅ Inventory history created');
+
+  // Create sample settings
+  const defaultSettings = [
+    { key: 'companyNameEn', value: 'Inventory Pro', type: 'STRING' },
+    { key: 'companyNameAr', value: 'نظام المخزون', type: 'STRING' },
+    { key: 'defaultCurrency', value: 'USD', type: 'STRING' },
+    { key: 'lowStockThreshold', value: '10', type: 'NUMBER' },
+    { key: 'autoBackup', value: 'true', type: 'BOOLEAN' }
+  ];
+
+  for (const setting of defaultSettings) {
+    await prisma.settings.upsert({
+      where: { key: setting.key },
+      update: {},
+      create: setting
+    });
+  }
+
+  console.log('✅ Default settings created');
 
   console.log(`
 🎉 Database setup complete!
@@ -190,7 +211,9 @@ async function main() {
    - ${categories.length} categories
    - ${products.length} products
    - 1 customer
+   - 1 supplier
    - Inventory history records
+   - Default settings
 
 🚀 You can now run: npm run dev
   `);
