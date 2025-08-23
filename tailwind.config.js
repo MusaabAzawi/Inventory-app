@@ -1,38 +1,20 @@
 /** @type {import('tailwindcss').Config} */
-import forms from '@tailwindcss/forms';
-import typography from '@tailwindcss/typography';
-
 export default {
-  content: ['./src/**/*.{html,js,svelte,ts}'],
-  darkMode: 'class',
+  content: [
+    './src/**/*.{html,js,svelte,ts,css}', // Explicitly include CSS
+  ],
   theme: {
     extend: {
-      fontFamily: {
-        'sans': ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
-        'arabic': ['Noto Sans Arabic', 'Arial', 'sans-serif']
+      colors: {
+        primary: 'rgb(var(--primary) / <alpha-value>)',
+        'primary-dark': 'rgb(var(--primary-dark) / <alpha-value>)',
+        secondary: 'rgb(var(--secondary) / <alpha-value>)',
+        success: 'rgb(var(--success) / <alpha-value>)',
+        warning: 'rgb(var(--warning) / <alpha-value>)',
+        danger: 'rgb(var(--danger) / <alpha-value>)',
+        info: 'rgb(var(--info) / <alpha-value>)',
       },
-      animation: {
-        'slide-in': 'slideIn 0.3s ease-out',
-        'fade-in': 'fadeIn 0.3s ease-out'
-      },
-      keyframes: {
-        slideIn: {
-          '0%': { transform: 'translateX(-100%)' },
-          '100%': { transform: 'translateX(0)' }
-        },
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' }
-        }
-      }
-    }
+    },
   },
-  plugins: [
-    forms,
-    typography,
-    function({ addVariant }) {
-      addVariant('rtl', '[dir="rtl"] &')
-      addVariant('ltr', '[dir="ltr"] &')
-    }
-  ]
-}
+  plugins: [],
+};
