@@ -34,7 +34,7 @@
   <div class="flex flex-col h-full">
     <!-- Logo -->
     <div class="flex items-center justify-center h-16 bg-gray-800">
-      <h2 class="text-xl font-bold text-white">Inventory Pro</h2>
+      <h2 class="text-xl font-bold text-white">StockSync</h2>
     </div>
 
     <!-- Navigation -->
