@@ -81,11 +81,12 @@ export const actions: Actions = {
           action: 'INITIAL_STOCK',
           previousQuantity: 0,
           newQuantity: validatedData.quantity,
+          quantityChange: validatedData.quantity,
           reason: 'Initial product creation'
         }
       });
 
-      throw redirect(302, '/inventory');
+      throw redirect(302, '/inventory?success=product_created&name=' + encodeURIComponent(validatedData.nameEn));
     } catch (error) {
       if (error instanceof z.ZodError) {
         return fail(400, {

@@ -91,6 +91,13 @@
           'Error',
           result.data?.error || 'An error occurred while saving the product'
         );
+      } else if (result.type === 'redirect') {
+        // Success redirect - clear any error states
+        form = null;
+        notifications.success(
+          'Product Created',
+          `${formData.nameEn} has been created successfully.`
+        );
       }
     };
   }
@@ -112,7 +119,7 @@
     </div>
   {/if}
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div class="mobile-grid-stack gap-4 sm:gap-6">
     <!-- English Name -->
     <div>
       <label for="nameEn" class="label">
@@ -165,10 +172,12 @@
         <button
           type="button"
           on:click={generateSKU}
-          class="btn-secondary btn-md"
+          class="btn-secondary btn-md touch-manipulation"
           title="Generate SKU"
+          aria-label="Generate SKU"
         >
-          Generate
+          <span class="hidden sm:inline">Generate</span>
+          <span class="sm:hidden">Gen</span>
         </button>
       </div>
     </div>
@@ -190,8 +199,9 @@
         <button
           type="button"
           on:click={() => showBarcodeScanner = true}
-          class="btn-secondary btn-md"
+          class="btn-secondary btn-md touch-manipulation"
           title="Scan Barcode"
+          aria-label="Scan Barcode"
         >
           <Scan class="h-4 w-4" />
         </button>
@@ -320,14 +330,14 @@
   {/if}
 
   <!-- Form Actions -->
-  <div class="flex justify-end gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
-    <a href="/inventory" class="btn-secondary btn-md">
+  <div class="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+    <a href="/inventory" class="btn-secondary btn-md touch-manipulation order-2 sm:order-1">
       <ArrowLeft class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
       {$_('common.cancel')}
     </a>
     <button 
       type="submit" 
-      class="btn-primary btn-md"
+      class="btn-primary btn-md touch-manipulation order-1 sm:order-2"
       disabled={isSubmitting}
     >
       {#if isSubmitting}

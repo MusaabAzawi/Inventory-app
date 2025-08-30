@@ -78,23 +78,24 @@
           type="text"
           bind:value={searchTerm}
           placeholder={$_('common.search')}
-          class="ltr:pl-10 rtl:pr-10 ltr:pr-4 rtl:pl-4 py-2 w-full border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          class="input ltr:pl-10 rtl:pr-10"
         />
       </div>
     </div>
   {/if}
 
   <!-- Table -->
-  <div class="overflow-x-auto">
-    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+  <div class="table-responsive">
+    <table class="table">
       <thead class="bg-gray-50 dark:bg-gray-700">
         <tr>
           {#each columns as column}
             <th
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300 select-none"
+              class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300 select-none"
               class:cursor-pointer={column.sortable}
               class:hover:bg-gray-100={column.sortable}
               class:dark:hover:bg-gray-600={column.sortable}
+              class:touch-manipulation={column.sortable}
               on:click={() => column.sortable && handleSort(column.key)}
               on:keydown={(e) => {
                 if (column.sortable && (e.key === 'Enter' || e.key === ' ')) {
@@ -118,7 +119,7 @@
             </th>
           {/each}
           {#if showActions}
-            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
+            <th class="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
               {$_('common.actions')}
             </th>
           {/if}

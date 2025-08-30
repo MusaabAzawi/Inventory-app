@@ -28,9 +28,9 @@
   $: currentPath = $page.url.pathname;
 </script>
 
-<aside class="fixed inset-y-0 ltr:left-0 rtl:right-0 z-20 w-64 bg-gray-900 transform transition-transform duration-300 ease-in-out
+<aside class="fixed inset-y-0 ltr:left-0 rtl:right-0 z-50 w-64 bg-gray-900 transform transition-transform duration-300 ease-in-out
              {open ? 'translate-x-0' : 'ltr:-translate-x-full rtl:translate-x-full'}
-             md:translate-x-0 md:static md:inset-0">
+             md:translate-x-0 md:static md:inset-0 md:z-auto">
   <div class="flex flex-col h-full">
     <!-- Logo -->
     <div class="flex items-center justify-center h-16 bg-gray-800">
@@ -42,7 +42,7 @@
       {#each navigation as item}
         <a
           href={item.href}
-          class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors
+          class="flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-md transition-colors touch-manipulation
                  {currentPath.startsWith(item.href)
                    ? 'bg-gray-800 text-white'
                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'}"

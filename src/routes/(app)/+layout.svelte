@@ -22,11 +22,13 @@
   </div>
 
   <!-- Main content area -->
-  <div class="flex-1 flex flex-col">
+  <div class="flex-1 flex flex-col min-w-0">
     <Header bind:sidebarOpen />
     
-    <main class="flex-1 p-6 overflow-auto">
-      <slot />
+    <main class="flex-1 p-4 sm:p-6 overflow-auto">
+      <div class="max-w-7xl mx-auto">
+        <slot />
+      </div>
     </main>
   </div>
 </div>
@@ -34,7 +36,7 @@
 <!-- Mobile sidebar overlay -->
 {#if sidebarOpen}
   <div 
-    class="md:hidden fixed inset-0 z-40 bg-black bg-opacity-50" 
+    class="md:hidden fixed inset-0 z-40 bg-black bg-opacity-50 transition-opacity" 
     on:click={() => sidebarOpen = false}
     on:keydown={(e) => {
       if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
@@ -46,16 +48,7 @@
     tabindex="0"
     aria-label="Close sidebar"
   >
-    <div
-      class="w-64 bg-white h-full dark:bg-gray-800"
-      on:click|stopPropagation
-      on:keydown|stopPropagation
-      role="dialog"
-      aria-modal="true"
-      tabindex="0"
-    >
-      <Sidebar bind:open={sidebarOpen} />
-    </div>
+    <Sidebar bind:open={sidebarOpen} />
   </div>
 {/if}
 

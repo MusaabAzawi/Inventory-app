@@ -19,9 +19,10 @@
       <!-- Mobile menu button -->
       <button
         on:click={toggleSidebar}
-        class="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-400 
+        class="md:hidden inline-flex items-center justify-center p-3 rounded-md text-gray-400 
                hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 
-               focus:ring-inset focus:ring-blue-500"
+               focus:ring-inset focus:ring-blue-500 touch-manipulation min-w-[44px] min-h-[44px]"
+        aria-label="Toggle navigation menu"
       >
         {#if sidebarOpen}
           <X class="h-6 w-6" />
@@ -42,9 +43,9 @@
         <LanguageSwitcher />
         
         <!-- Notifications -->
-        <button class="p-2 text-gray-400 hover:text-gray-500 relative">
+        <button class="p-3 text-gray-400 hover:text-gray-500 relative touch-manipulation min-w-[44px] min-h-[44px] rounded-md hover:bg-gray-100 dark:hover:bg-gray-700" aria-label="Notifications">
           <Bell class="h-5 w-5" />
-          <span class="absolute top-0 ltr:right-0 rtl:left-0 block h-2 w-2 rounded-full bg-red-400 ring-2 ring-white"></span>
+          <span class="absolute top-2 ltr:right-2 rtl:left-2 block h-2 w-2 rounded-full bg-red-400 ring-2 ring-white"></span>
         </button>
 
         <!-- User menu -->
@@ -52,10 +53,11 @@
           <button
             on:click={() => userMenuOpen = !userMenuOpen}
             on:blur={() => setTimeout(() => userMenuOpen = false, 200)}
-            class="flex items-center gap-2 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+            class="flex items-center gap-2 p-3 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 touch-manipulation min-h-[44px]"
+            aria-label="User menu"
           >
             <User class="h-5 w-5" />
-            <span class="hidden sm:block text-sm font-medium">
+            <span class="hidden sm:block text-sm font-medium truncate max-w-32">
               {$page.data.user?.name}
             </span>
           </button>

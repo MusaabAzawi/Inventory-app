@@ -5,8 +5,17 @@
   import type { PageData } from './$types';
   import ProductList from '$lib/components/products/ProductList.svelte';
   import BarcodeScanner from '$lib/components/barcode/BarcodeScanner.svelte';
+  import { notifications } from '$lib/stores/notifications';
+  import { onMount } from 'svelte';
   
   export let data: PageData;
+  
+  // Show success message if present
+  onMount(() => {
+    if (data.successMessage) {
+      notifications.success(data.successMessage.title, data.successMessage.message);
+    }
+  });
   
   let showScanner = false;
   let searchQuery = '';
@@ -66,15 +75,17 @@
       <!-- Barcode Scanner Button -->
       <button
         on:click={openBarcodeScanner}
-        class="btn-secondary btn-md"
+        class="btn-secondary btn-md touch-manipulation"
       >
         <Scan class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
-        {$_('modules.inventory.scanBarcode')}
+        <span class="hidden sm:inline">{$_('modules.inventory.scanBarcode')}</span>
+        <span class="sm:hidden">Scan</span>
       </button>
       
-      <a href="/inventory/products/new" class="btn-primary btn-md">
+      <a href="/inventory/products/new" class="btn-primary btn-md touch-manipulation">
         <Plus class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
-        {$_('modules.inventory.addProduct')}
+        <span class="hidden sm:inline">{$_('modules.inventory.addProduct')}</span>
+        <span class="sm:hidden">Add</span>
       </a>
     </div>
   </div>
