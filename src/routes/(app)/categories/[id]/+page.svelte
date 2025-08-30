@@ -82,7 +82,7 @@
             class="input"
             value={form?.nameEn ?? data.category.nameEn}
             dir="ltr"
-            placeholder="Enter category name in English"
+            placeholder={$_('categories.enterNameEnglish')}
           />
         </div>
 
@@ -113,7 +113,7 @@
             class="input"
             value={form?.descriptionEn ?? data.category.descriptionEn ?? ''}
             dir="ltr"
-            placeholder="Optional description in English"
+            placeholder={$_('categories.enterDescriptionEnglish')}
           ></textarea>
         </div>
 

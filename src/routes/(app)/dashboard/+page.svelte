@@ -37,14 +37,14 @@
           labels: data.chartData.inventoryMovements.map(item => item.date),
           datasets: [
             {
-              label: 'Stock In',
+              label: $_('dashboard.charts.stockIn'),
               data: data.chartData.inventoryMovements.map(item => item.stockIn),
               backgroundColor: 'rgba(34, 197, 94, 0.8)',
               borderColor: 'rgba(34, 197, 94, 1)',
               borderWidth: 1
             },
             {
-              label: 'Stock Out',
+              label: $_('dashboard.charts.stockOut'),
               data: data.chartData.inventoryMovements.map(item => item.stockOut),
               backgroundColor: 'rgba(239, 68, 68, 0.8)',
               borderColor: 'rgba(239, 68, 68, 1)',
@@ -61,7 +61,7 @@
             },
             title: {
               display: true,
-              text: 'Inventory Movements (Last 7 Days)'
+              text: $_('dashboard.charts.inventoryMovementsTitle')
             }
           },
           scales: {
@@ -106,7 +106,7 @@
             },
             title: {
               display: true,
-              text: 'Products by Category'
+              text: $_('dashboard.charts.categoryDistributionTitle')
             }
           }
         }
@@ -123,7 +123,7 @@
             $locale === 'ar' ? item.product?.nameAr : item.product?.nameEn
           ),
           datasets: [{
-            label: 'Revenue ($)',
+            label: $_('dashboard.charts.revenue'),
             data: data.chartData.topProducts.map(item => item._sum.total || 0),
             backgroundColor: 'rgba(59, 130, 246, 0.8)',
             borderColor: 'rgba(59, 130, 246, 1)',
@@ -139,7 +139,7 @@
             },
             title: {
               display: true,
-              text: 'Top Selling Products (This Month)'
+              text: $_('dashboard.charts.topProductsTitle')
             }
           },
           scales: {
@@ -165,39 +165,39 @@
 
   $: stats = [
     {
-      title: 'Total Products',
+      title: $_('dashboard.stats.totalProducts'),
       value: data.stats?.totalProducts?.toLocaleString() || '0',
       icon: Package,
       color: 'bg-blue-500',
       change: null
     },
     {
-      title: 'Today\'s Sales',
+      title: $_('dashboard.stats.todaysSales'),
       value: data.stats?.totalSalesToday?.toString() || '0',
       icon: ShoppingCart,
       color: 'bg-green-500',
       change: null
     },
     {
-      title: 'Monthly Revenue',
+      title: $_('dashboard.stats.monthlyRevenue'),
       value: formatCurrency(data.stats?.totalSalesThisMonth || 0),
       icon: DollarSign,
       color: 'bg-yellow-500',
-      change: `${data.stats?.salesCountThisMonth || 0} sales`
+      change: $_('dashboard.stats.salesCount', { values: { count: data.stats?.salesCountThisMonth || 0 } })
     },
     {
-      title: 'Inventory Value',
+      title: $_('dashboard.stats.inventoryValue'),
       value: formatCurrency(data.stats?.inventoryValue || 0),
       icon: TrendingUp,
       color: 'bg-purple-500',
       change: null
     },
     {
-      title: 'Low Stock Items',
+      title: $_('dashboard.stats.lowStockItems'),
       value: data.stats?.lowStockItems?.toString() || '0',
       icon: AlertTriangle,
       color: 'bg-orange-500',
-      change: `${data.stats?.outOfStockItems || 0} out of stock`
+      change: $_('dashboard.stats.outOfStock', { values: { count: data.stats?.outOfStockItems || 0 } })
     }
   ];
 </script>
@@ -209,7 +209,7 @@
       {$_('nav.dashboard')}
     </h1>
     <p class="text-blue-100">
-      Welcome back, {data.user?.name}! Here's what's happening with your inventory.
+      {$_('dashboard.welcome', { values: { name: data.user?.name } })}
     </p>
   </div>
 
@@ -245,7 +245,7 @@
     <div class="bg-white rounded-lg shadow p-6 dark:bg-gray-800">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-          Inventory Movements
+          {$_('dashboard.charts.inventoryMovements')}
         </h2>
         <BarChart3 class="h-5 w-5 text-gray-400" />
       </div>
@@ -258,7 +258,7 @@
     <div class="bg-white rounded-lg shadow p-6 dark:bg-gray-800">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-          Category Distribution
+          {$_('dashboard.charts.categoryDistribution')}
         </h2>
         <Package class="h-5 w-5 text-gray-400" />
       </div>
@@ -274,7 +274,7 @@
     <div class="lg:col-span-1 bg-white rounded-lg shadow p-6 dark:bg-gray-800">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-          Recent Sales
+          {$_('dashboard.sections.recentSales')}
         </h2>
         <ShoppingCart class="h-5 w-5 text-gray-400" />
       </div>
@@ -309,13 +309,13 @@
         </div>
         <div class="mt-4 text-center">
           <a href="/sales" class="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400">
-            View all sales →
+            {$_('dashboard.actions.viewAllSales')}
           </a>
         </div>
       {:else}
         <div class="text-center py-8 text-gray-500 dark:text-gray-400">
           <ShoppingCart class="mx-auto h-12 w-12 text-gray-300 mb-4" />
-          <p>No recent sales</p>
+          <p>{$_('dashboard.messages.noRecentSales')}</p>
         </div>
       {/if}
     </div>
@@ -324,7 +324,7 @@
     <div class="lg:col-span-1 bg-white rounded-lg shadow p-6 dark:bg-gray-800">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-          Stock Alerts
+          {$_('dashboard.sections.stockAlerts')}
         </h2>
         <AlertTriangle class="h-5 w-5 text-yellow-500" />
       </div>
@@ -359,7 +359,7 @@
                 <p class="text-xs"
                    class:text-red-600={product.quantity === 0}
                    class:text-yellow-600={product.quantity > 0}>
-                  {product.quantity === 0 ? 'Out of stock' : 'Low stock'}
+                  {product.quantity === 0 ? $_('dashboard.messages.outOfStock') : $_('dashboard.messages.lowStock')}
                 </p>
               </div>
             </div>
@@ -367,13 +367,13 @@
         </div>
         <div class="mt-4 text-center">
           <a href="/inventory?filter=low-stock" class="text-sm text-yellow-600 hover:text-yellow-500">
-            View all alerts →
+            {$_('dashboard.actions.viewAllAlerts')}
           </a>
         </div>
       {:else}
         <div class="text-center py-8 text-gray-500 dark:text-gray-400">
           <Package class="mx-auto h-12 w-12 text-gray-300 mb-4" />
-          <p>All products are well stocked!</p>
+          <p>{$_('dashboard.messages.allProductsWellStocked')}</p>
         </div>
       {/if}
     </div>
@@ -382,7 +382,7 @@
     <div class="lg:col-span-1 bg-white rounded-lg shadow p-6 dark:bg-gray-800">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-          Top Products
+          {$_('dashboard.charts.topProducts')}
         </h2>
         <TrendingUp class="h-5 w-5 text-gray-400" />
       </div>
@@ -395,27 +395,27 @@
   <!-- Quick Actions -->
   <div class="bg-white rounded-lg shadow p-6 dark:bg-gray-800">
     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-      Quick Actions
+      {$_('dashboard.sections.quickActions')}
     </h2>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
       <a href="/inventory/products/new" class="flex flex-col items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors dark:bg-blue-900 dark:hover:bg-blue-800">
         <Package class="h-8 w-8 text-blue-600 mb-2" />
-        <span class="text-sm font-medium text-blue-900 dark:text-blue-100">Add Product</span>
+        <span class="text-sm font-medium text-blue-900 dark:text-blue-100">{$_('dashboard.actions.addProduct')}</span>
       </a>
       
       <a href="/sales/new" class="flex flex-col items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors dark:bg-green-900 dark:hover:bg-green-800">
         <ShoppingCart class="h-8 w-8 text-green-600 mb-2" />
-        <span class="text-sm font-medium text-green-900 dark:text-green-100">New Sale</span>
+        <span class="text-sm font-medium text-green-900 dark:text-green-100">{$_('dashboard.actions.newSale')}</span>
       </a>
       
       <a href="/inventory" class="flex flex-col items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors dark:bg-purple-900 dark:hover:bg-purple-800">
         <Eye class="h-8 w-8 text-purple-600 mb-2" />
-        <span class="text-sm font-medium text-purple-900 dark:text-purple-100">View Inventory</span>
+        <span class="text-sm font-medium text-purple-900 dark:text-purple-100">{$_('dashboard.actions.viewInventory')}</span>
       </a>
       
       <a href="/reports" class="flex flex-col items-center p-4 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors dark:bg-orange-900 dark:hover:bg-orange-800">
         <BarChart3 class="h-8 w-8 text-orange-600 mb-2" />
-        <span class="text-sm font-medium text-orange-900 dark:text-orange-100">Reports</span>
+        <span class="text-sm font-medium text-orange-900 dark:text-orange-100">{$_('dashboard.actions.reports')}</span>
       </a>
     </div>
   </div>

@@ -18,13 +18,13 @@
   
   export let data: PageData;
 
-  const columns = [
-    { key: 'invoiceNumber', label: 'Invoice #', sortable: true },
-    { key: 'supplier', label: 'Supplier', sortable: false },
-    { key: 'netAmount', label: 'Amount', sortable: true },
-    { key: 'status', label: 'Status', sortable: true },
-    { key: 'purchaseDate', label: 'Date', sortable: true },
-    { key: 'user.name', label: 'Ordered By', sortable: true }
+  $: columns = [
+    { key: 'invoiceNumber', label: $_('sales.invoiceNumber'), sortable: true },
+    { key: 'supplier', label: $_('purchases.supplier'), sortable: false },
+    { key: 'netAmount', label: $_('sales.amount'), sortable: true },
+    { key: 'status', label: $_('purchases.status'), sortable: true },
+    { key: 'purchaseDate', label: $_('sales.date'), sortable: true },
+    { key: 'user.name', label: $_('purchases.orderedBy'), sortable: true }
   ];
 
   function formatCurrency(amount: number) {
@@ -66,7 +66,7 @@
         {$_('modules.purchases.title')}
       </h1>
       <p class="text-gray-600 dark:text-gray-400 mt-1">
-        Manage purchase orders and supplier relationships
+        {$_('purchases.subtitle')}
       </p>
     </div>
     
@@ -89,13 +89,13 @@
           </div>
           <div class="ltr:ml-4 rtl:mr-4 flex-1">
             <p class="text-sm font-medium text-gray-600 dark:text-gray-300">
-              Today's Purchases
+              {$_('purchases.todaysPurchases')}
             </p>
             <p class="text-2xl font-semibold text-gray-900 dark:text-white">
               {formatCurrency(data.stats.today.amount)}
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-400">
-              {data.stats.today.count} orders
+              {$_('purchases.orders', { values: { count: data.stats.today.count } })}
             </p>
           </div>
         </div>
@@ -109,13 +109,13 @@
           </div>
           <div class="ltr:ml-4 rtl:mr-4 flex-1">
             <p class="text-sm font-medium text-gray-600 dark:text-gray-300">
-              This Month
+              {$_('purchases.thisMonth')}
             </p>
             <p class="text-2xl font-semibold text-gray-900 dark:text-white">
               {formatCurrency(data.stats.thisMonth.amount)}
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-400">
-              {data.stats.thisMonth.count} orders
+              {$_('purchases.orders', { values: { count: data.stats.thisMonth.count } })}
             </p>
           </div>
         </div>
@@ -129,13 +129,13 @@
           </div>
           <div class="ltr:ml-4 rtl:mr-4 flex-1">
             <p class="text-sm font-medium text-gray-600 dark:text-gray-300">
-              Total Purchases
+              {$_('purchases.totalPurchases')}
             </p>
             <p class="text-2xl font-semibold text-gray-900 dark:text-white">
               {formatCurrency(data.stats.total.amount)}
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-400">
-              {data.stats.total.count} orders
+              {$_('purchases.orders', { values: { count: data.stats.total.count } })}
             </p>
           </div>
         </div>
@@ -169,7 +169,7 @@
               </div>
             </div>
           {:else}
-            <span class="text-gray-500 italic">No supplier</span>
+            <span class="text-gray-500 italic">{$_('purchases.noSupplier')}</span>
           {/if}
         </td>
 
@@ -190,7 +190,7 @@
         <!-- Status -->
         <td class="px-6 py-4 whitespace-nowrap text-sm">
           <span class="px-2 py-1 text-xs font-medium rounded-full {getStatusColor(item.status)}">
-            {item.status}
+            {item.status === 'COMPLETED' ? $_('purchases.completed') : item.status === 'PENDING' ? $_('purchases.pending') : item.status === 'CANCELLED' ? $_('purchases.cancelled') : item.status}
           </span>
         </td>
 
@@ -214,14 +214,14 @@
           <a 
             href="/purchases/{item.id}" 
             class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-            title="View details"
+            title={$_('purchases.viewDetails')}
           >
             <Eye class="h-4 w-4" />
           </a>
           <a 
             href="/purchases/{item.id}/edit" 
             class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
-            title="Edit purchase"
+            title={$_('purchases.editPurchase')}
           >
             <Edit class="h-4 w-4" />
           </a>
@@ -238,22 +238,22 @@
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
       <a href="/purchases/new" class="flex flex-col items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors dark:bg-blue-900 dark:hover:bg-blue-800">
         <Plus class="h-8 w-8 text-blue-600 mb-2" />
-        <span class="text-sm font-medium text-blue-900 dark:text-blue-100">New Purchase</span>
+        <span class="text-sm font-medium text-blue-900 dark:text-blue-100">{$_('purchases.newPurchase')}</span>
       </a>
       
       <a href="/suppliers" class="flex flex-col items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors dark:bg-green-900 dark:hover:bg-green-800">
         <Truck class="h-8 w-8 text-green-600 mb-2" />
-        <span class="text-sm font-medium text-green-900 dark:text-green-100">Manage Suppliers</span>
+        <span class="text-sm font-medium text-green-900 dark:text-green-100">{$_('purchases.manageSuppliers')}</span>
       </a>
       
       <a href="/inventory" class="flex flex-col items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors dark:bg-purple-900 dark:hover:bg-purple-800">
         <Package class="h-8 w-8 text-purple-600 mb-2" />
-        <span class="text-sm font-medium text-purple-900 dark:text-purple-100">Check Inventory</span>
+        <span class="text-sm font-medium text-purple-900 dark:text-purple-100">{$_('purchases.checkInventory')}</span>
       </a>
       
       <a href="/reports?type=purchases" class="flex flex-col items-center p-4 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors dark:bg-orange-900 dark:hover:bg-orange-800">
         <TrendingDown class="h-8 w-8 text-orange-600 mb-2" />
-        <span class="text-sm font-medium text-orange-900 dark:text-orange-100">Purchase Reports</span>
+        <span class="text-sm font-medium text-orange-900 dark:text-orange-100">{$_('purchases.purchaseReports')}</span>
       </a>
     </div>
   </div>

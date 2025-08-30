@@ -69,13 +69,13 @@
   $: transactions = data.transactions?.length ? data.transactions : mockTransactions;
   $: stats = data.stats || mockStats;
 
-  const columns = [
-    { key: 'type', label: 'Type', sortable: true },
-    { key: 'description', label: 'Description', sortable: false },
-    { key: 'amount', label: 'Amount', sortable: true },
-    { key: 'currency', label: 'Currency', sortable: true },
-    { key: 'status', label: 'Status', sortable: true },
-    { key: 'createdAt', label: 'Date', sortable: true }
+  $: columns = [
+    { key: 'type', label: $_('cash.type'), sortable: true },
+    { key: 'description', label: $_('cash.description'), sortable: false },
+    { key: 'amount', label: $_('cash.amount'), sortable: true },
+    { key: 'currency', label: $_('cash.currency'), sortable: true },
+    { key: 'status', label: $_('cash.status'), sortable: true },
+    { key: 'createdAt', label: $_('cash.date'), sortable: true }
   ];
 
   function formatCurrency(amount: number, currency: string = 'USD') {
@@ -145,7 +145,7 @@
         {$_('modules.cash.title')}
       </h1>
       <p class="text-gray-600 dark:text-gray-400 mt-1">
-        Manage cash transactions and financial operations
+        {$_('cash.subtitle')}
       </p>
     </div>
     
@@ -171,13 +171,13 @@
         </div>
         <div class="ltr:ml-4 rtl:mr-4 flex-1">
           <p class="text-sm font-medium text-gray-600 dark:text-gray-300">
-            Total Receipts
+            {$_('cash.totalReceipts')}
           </p>
           <p class="text-2xl font-semibold text-gray-900 dark:text-white">
             {formatCurrency(stats.totalReceipts)}
           </p>
           <p class="text-xs text-green-600 dark:text-green-400">
-            +12% from last month
+            {$_('cash.fromLastMonth', { values: { percent: '12' } })}
           </p>
         </div>
       </div>
@@ -191,13 +191,13 @@
         </div>
         <div class="ltr:ml-4 rtl:mr-4 flex-1">
           <p class="text-sm font-medium text-gray-600 dark:text-gray-300">
-            Total Payments
+            {$_('cash.totalPayments')}
           </p>
           <p class="text-2xl font-semibold text-gray-900 dark:text-white">
             {formatCurrency(stats.totalPayments)}
           </p>
           <p class="text-xs text-red-600 dark:text-red-400">
-            +8% from last month
+            {$_('cash.fromLastMonth', { values: { percent: '8' } })}
           </p>
         </div>
       </div>
@@ -211,13 +211,13 @@
         </div>
         <div class="ltr:ml-4 rtl:mr-4 flex-1">
           <p class="text-sm font-medium text-gray-600 dark:text-gray-300">
-            Net Cash Flow
+            {$_('cash.netCashFlow')}
           </p>
           <p class="text-2xl font-semibold text-gray-900 dark:text-white">
             {formatCurrency(stats.netCashFlow)}
           </p>
           <p class="text-xs text-blue-600 dark:text-blue-400">
-            Positive flow
+            {$_('cash.positiveFlow')}
           </p>
         </div>
       </div>
@@ -231,13 +231,13 @@
         </div>
         <div class="ltr:ml-4 rtl:mr-4 flex-1">
           <p class="text-sm font-medium text-gray-600 dark:text-gray-300">
-            Today's Transactions
+            {$_('cash.todaysTransactions')}
           </p>
           <p class="text-2xl font-semibold text-gray-900 dark:text-white">
             {stats.todaysTransactions}
           </p>
           <p class="text-xs text-gray-500 dark:text-gray-400">
-            Active today  
+            {$_('cash.activeToday')}
           </p>
         </div>
       </div>
@@ -255,7 +255,7 @@
           <div class="flex items-center">
             <TransactionIcon class="h-4 w-4 ltr:mr-2 rtl:ml-2 {item.type === 'RECEIPT' ? 'text-green-600' : 'text-red-600'}" />
             <span class="px-2 py-1 text-xs font-medium rounded-full {getTransactionColor(item.type)}">
-              {item.type}
+              {item.type === 'RECEIPT' ? $_('cash.receipt') : item.type === 'PAYMENT' ? $_('cash.payment') : item.type === 'SALARY' ? $_('cash.salary') : item.type === 'EXPENSE' ? $_('cash.expense') : item.type === 'TRANSFER' ? $_('cash.transfer') : item.type}
             </span>
           </div>
         </td>
@@ -265,7 +265,7 @@
           <div>
             <p class="font-medium">{item.description}</p>
             <p class="text-xs text-gray-500 dark:text-gray-400">
-              by {item.user.name}
+              {$_('cash.by', { values: { name: item.user.name } })}
             </p>
           </div>
         </td>
@@ -277,7 +277,7 @@
           </p>
           {#if item.exchangeRate !== 1}
             <p class="text-xs text-gray-500 dark:text-gray-400">
-              Rate: {item.exchangeRate}
+              {$_('cash.rate', { values: { rate: item.exchangeRate } })}
             </p>
           {/if}
         </td>
@@ -290,7 +290,7 @@
         <!-- Status -->
         <td class="px-6 py-4 whitespace-nowrap text-sm">
           <span class="px-2 py-1 text-xs font-medium rounded-full {getStatusColor(item.status)}">
-            {item.status}
+            {item.status === 'COMPLETED' ? $_('cash.completed') : item.status === 'PENDING' ? $_('cash.pending') : item.status === 'CANCELLED' ? $_('cash.cancelled') : item.status}
           </span>
         </td>
 
@@ -309,14 +309,14 @@
           <a 
             href="/cash/{item.id}" 
             class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-            title="View details"
+            title={$_('cash.viewDetails')}
           >
             <Eye class="h-4 w-4" />
           </a>
           <a 
             href="/cash/{item.id}/edit" 
             class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
-            title="Edit transaction"
+            title={$_('cash.editTransaction')}
           >
             <Edit class="h-4 w-4" />
           </a>
@@ -328,7 +328,7 @@
   <!-- Quick Actions -->
   <div class="bg-white rounded-lg shadow p-6 dark:bg-gray-800">
     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-      Quick Actions
+      {$_('cash.quickActions')}
     </h2>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
       <a href="/cash/receipt" class="flex flex-col items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors dark:bg-green-900 dark:hover:bg-green-800">
@@ -348,7 +348,7 @@
       
       <a href="/reports?type=cash" class="flex flex-col items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors dark:bg-purple-900 dark:hover:bg-purple-800">
         <TrendingUp class="h-8 w-8 text-purple-600 mb-2" />
-        <span class="text-sm font-medium text-purple-900 dark:text-purple-100">Cash Reports</span>
+        <span class="text-sm font-medium text-purple-900 dark:text-purple-100">{$_('cash.cashReports')}</span>
       </a>
     </div>
   </div>

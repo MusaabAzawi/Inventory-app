@@ -224,14 +224,14 @@
           <a 
             href="/accounts/customers/{item.id}" 
             class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-            title="View details"
+            title={$_('accounts.viewDetails')}
           >
             <Eye class="h-4 w-4" />
           </a>
           <a 
             href="/accounts/customers/{item.id}/edit" 
             class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
-            title="Edit customer"
+            title={$_('accounts.editCustomer')}
           >
             <Edit class="h-4 w-4" />
           </a>

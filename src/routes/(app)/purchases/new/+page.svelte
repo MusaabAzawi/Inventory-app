@@ -114,9 +114,9 @@
         }];
       }
       
-      notifications.success('Product Added', `${$locale === 'ar' ? product.nameAr : product.nameEn} added to purchase`);
+      notifications.success($_('purchases.productAdded'), $_('purchases.productAddedMessage', { values: { name: $locale === 'ar' ? product.nameAr : product.nameEn } }));
     } else {
-      notifications.error('Product Not Found', `No product found with barcode: ${barcode}`);
+      notifications.error($_('purchases.productNotFound'), $_('purchases.noProductWithBarcode', { values: { barcode } }));
     }
   }
 
@@ -125,13 +125,13 @@
       isSubmitting = false;
       
       if (result.type === 'success') {
-        notifications.success('Purchase Created', 'Purchase order has been created successfully');
+        notifications.success($_('purchases.purchaseCreated'), $_('purchases.purchaseCreatedMessage'));
       } else if (result.type === 'failure') {
-        notifications.error('Purchase Failed', result.data?.error || 'Failed to create purchase');
+        notifications.error($_('purchases.purchaseFailed'), result.data?.error || $_('purchases.failedToCreate'));
         // Update the form to show errors
         await update();
       } else if (result.type === 'redirect') {
-        notifications.success('Purchase Created', 'Purchase order has been created successfully');
+        notifications.success($_('purchases.purchaseCreated'), $_('purchases.purchaseCreatedMessage'));
         // Redirect will happen automatically
       }
     };
@@ -140,28 +140,28 @@
   function validateForm() {
     // Check if we have any items
     if (items.length === 0) {
-      notifications.error('Validation Error', 'Please add at least one item to the purchase');
+      notifications.error($_('purchases.validationError'), $_('purchases.addAtLeastOneItem'));
       return false;
     }
     
     // Check if all items have products selected
     const itemsWithoutProducts = items.filter(item => !item.productId);
     if (itemsWithoutProducts.length > 0) {
-      notifications.error('Validation Error', 'Please select a product for all items');
+      notifications.error($_('purchases.validationError'), $_('purchases.selectProductForAll'));
       return false;
     }
     
     // Check if all items have valid quantities
     const itemsWithInvalidQty = items.filter(item => !item.quantity || item.quantity <= 0);
     if (itemsWithInvalidQty.length > 0) {
-      notifications.error('Validation Error', 'Please enter valid quantities for all items');
+      notifications.error($_('purchases.validationError'), $_('purchases.enterValidQuantities'));
       return false;
     }
     
     // Check if all items have valid prices
     const itemsWithInvalidPrice = items.filter(item => !item.price || item.price <= 0);
     if (itemsWithInvalidPrice.length > 0) {
-      notifications.error('Validation Error', 'Please enter valid prices for all items');
+      notifications.error($_('purchases.validationError'), $_('purchases.enterValidPrices'));
       return false;
     }
     
@@ -201,7 +201,7 @@
         {$_('modules.purchases.newPurchase')}
       </h1>
       <p class="text-gray-600 dark:text-gray-400 mt-1">
-        Create a new purchase order from supplier
+        {$_('purchases.newPurchaseSubtitle')}
       </p>
     </div>
   </div>
@@ -231,7 +231,7 @@
         <!-- Items Header -->
         <div class="flex items-center justify-between">
           <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-            Purchase Items
+            {$_('purchases.purchaseItems')}
           </h2>
           <div class="flex gap-2">
             <button
@@ -240,7 +240,7 @@
               class="btn-secondary btn-sm"
             >
               <Scan class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
-              Scan
+{$_('inventory.scan')}
             </button>
             <button
               type="button"
@@ -248,7 +248,7 @@
               class="btn-primary btn-sm"
             >
               <Plus class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
-              Add Item
+{$_('purchases.addItem')}
             </button>
           </div>
         </div>
@@ -260,7 +260,7 @@
               <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
                 <!-- Product -->
                 <div class="md:col-span-2">
-                  <label for="product-{index}" class="label">Product</label>
+                  <label for="product-{index}" class="label">{$_('purchases.product')}</label>
                   <select
                     id="product-{index}"
                     bind:value={item.productId}
@@ -268,11 +268,11 @@
                     class="input text-sm"
                     required
                   >
-                    <option value="">Select product...</option>
+                    <option value="">{$_('purchases.selectProduct')}</option>
                     {#each data.products as product}
                       <option value={product.id}>
                         {$locale === 'ar' ? product.nameAr : product.nameEn} - {product.sku}
-                        (Stock: {product.quantity})
+                        ({$_('purchases.stock')}: {product.quantity})
                       </option>
                     {/each}
                   </select>
@@ -280,7 +280,7 @@
 
                 <!-- Quantity -->
                 <div>
-                  <label for="quantity-{index}" class="label">Qty</label>
+                  <label for="quantity-{index}" class="label">{$_('purchases.quantity')}</label>
                   <input
                     id="quantity-{index}"
                     type="number"
@@ -294,7 +294,7 @@
 
                 <!-- Price -->
                 <div>
-                  <label for="price-{index}" class="label">Cost Price</label>
+                  <label for="price-{index}" class="label">{$_('purchases.costPrice')}</label>
                   <input
                     id="price-{index}"
                     type="number"
@@ -309,7 +309,7 @@
 
                 <!-- Total -->
                 <div>
-                  <label class="label">Total</label>
+                  <label class="label">{$_('purchases.total')}</label>
                   <div class="input bg-gray-50 dark:bg-gray-700">
                     ${item.total.toFixed(2)}
                   </div>
@@ -333,17 +333,17 @@
                 <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div>
-                      <span class="text-gray-500 dark:text-gray-400">Current Stock:</span>
+                      <span class="text-gray-500 dark:text-gray-400">{$_('purchases.currentStock')}</span>
                       <span class="font-medium ltr:ml-2 rtl:mr-2">{item.product.quantity}</span>
                     </div>
                     <div>
-                      <span class="text-gray-500 dark:text-gray-400">Category:</span>
+                      <span class="text-gray-500 dark:text-gray-400">{$_('purchases.category')}</span>
                       <span class="font-medium ltr:ml-2 rtl:mr-2">
-                        {item.product.category ? ($locale === 'ar' ? item.product.category.nameAr : item.product.category.nameEn) : 'None'}
+                        {item.product.category ? ($locale === 'ar' ? item.product.category.nameAr : item.product.category.nameEn) : $_('purchases.none')}
                       </span>
                     </div>
                     <div>
-                      <span class="text-gray-500 dark:text-gray-400">Current Selling Price:</span>
+                      <span class="text-gray-500 dark:text-gray-400">{$_('purchases.currentSellingPrice')}</span>
                       <span class="font-medium ltr:ml-2 rtl:mr-2">{formatCurrency(item.product.sellingPrice)}</span>
                     </div>
                   </div>
@@ -357,8 +357,8 @@
                             {$_('modules.purchases.lastPrice')}: {formatCurrency(item.product.lastPurchase.price)}
                           </p>
                           <p class="text-blue-700 dark:text-blue-300">
-                            Date: {formatDate(item.product.lastPurchase.date)} | 
-                            Supplier: {$locale === 'ar' ? item.product.lastPurchase.supplier?.nameAr : item.product.lastPurchase.supplier?.nameEn}
+                            {$_('purchases.date')} {formatDate(item.product.lastPurchase.date)} | 
+                            {$_('purchases.supplier')}: {$locale === 'ar' ? item.product.lastPurchase.supplier?.nameAr : item.product.lastPurchase.supplier?.nameEn}
                           </p>
                         </div>
                       </div>
@@ -382,13 +382,13 @@
           
           <div class="space-y-4">
             <div>
-              <label for="supplier" class="label">Select Supplier</label>
+              <label for="supplier" class="label">{$_('purchases.selectSupplier')}</label>
               <select
                 id="supplier"
                 bind:value={purchaseData.supplierId}
                 class="input"
               >
-                <option value="">No Supplier (Direct Purchase)</option>
+                <option value="">{$_('purchases.noSupplierDirect')}</option>
                 {#each data.suppliers as supplier}
                   <option value={supplier.id}>
                     {$locale === 'ar' ? supplier.nameAr : supplier.nameEn}
@@ -419,19 +419,19 @@
         <div class="card p-4">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
             <Calculator class="h-5 w-5 ltr:mr-2 rtl:ml-2" />
-            Cost Details
+{$_('purchases.costDetails')}
           </h3>
           
           <div class="space-y-4">
             <!-- Subtotal -->
             <div class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-400">Subtotal:</span>
+              <span class="text-gray-600 dark:text-gray-400">{$_('purchases.subtotal')}</span>
               <span class="font-semibold">${subtotal.toFixed(2)}</span>
             </div>
 
             <!-- Discount -->
             <div>
-              <label for="discount" class="label">Discount</label>
+              <label for="discount" class="label">{$_('purchases.discount')}</label>
               <input
                 id="discount"
                 type="number"
@@ -445,7 +445,7 @@
 
             <!-- Tax -->
             <div>
-              <label for="tax" class="label">Tax</label>
+              <label for="tax" class="label">{$_('purchases.tax')}</label>
               <input
                 id="tax"
                 type="number"
@@ -458,19 +458,19 @@
 
             <!-- Net Amount -->
             <div class="flex justify-between text-lg font-semibold border-t pt-4">
-              <span>Total Cost:</span>
+              <span>{$_('purchases.totalCost')}</span>
               <span class="text-blue-600">${netAmount.toFixed(2)}</span>
             </div>
 
             <!-- Notes -->
             <div>
-              <label for="notes" class="label">Notes (Optional)</label>
+              <label for="notes" class="label">{$_('purchases.notesOptional')}</label>
               <textarea
                 id="notes"
                 bind:value={purchaseData.notes}
                 rows="3"
                 class="input"
-                placeholder="Additional notes about this purchase..."
+                placeholder={$_('purchases.notesPlaceholder')}
               ></textarea>
             </div>
           </div>
@@ -480,7 +480,7 @@
         <div class="card p-4 bg-green-50 dark:bg-green-900">
           <h3 class="text-lg font-semibold text-green-900 dark:text-green-100 mb-2 flex items-center">
             <Package class="h-5 w-5 ltr:mr-2 rtl:ml-2" />
-            Stock Impact
+{$_('purchases.stockImpact')}
           </h3>
           <div class="space-y-2 text-sm">
             {#each items.filter(item => item.product) as item}
@@ -492,7 +492,7 @@
               </div>
             {/each}
             {#if items.filter(item => item.product).length === 0}
-              <p class="text-green-600 dark:text-green-300">Select products to see stock impact</p>
+              <p class="text-green-600 dark:text-green-300">{$_('purchases.selectProductsForStock')}</p>
             {/if}
           </div>
         </div>
@@ -508,7 +508,7 @@
           {:else}
             <ShoppingBag class="h-5 w-5 ltr:mr-2 rtl:ml-2" />
           {/if}
-          {isSubmitting ? 'Creating Purchase...' : 'Create Purchase Order'}
+          {isSubmitting ? $_('purchases.creatingPurchase') : $_('purchases.createPurchaseOrder')}
         </button>
       </div>
     </div>
@@ -532,7 +532,7 @@
   <BarcodeScanner
     onScan={handleBarcodeScanned}
     onClose={() => showBarcodeScanner = false}
-    title="Scan Product Barcode"
+    title={$_('forms.scanProductBarcode')}
   />
 {/if}
 

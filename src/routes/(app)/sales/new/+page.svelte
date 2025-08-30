@@ -413,21 +413,21 @@
                 class="input"
                 required
               >
-                <option value="CASH">Cash</option>
-                <option value="CREDIT">Credit</option>
-                <option value="CARD">Card</option>
+                <option value="CASH">{$_('sales.cash')}</option>
+                <option value="CREDIT">{$_('sales.credit')}</option>
+                <option value="CARD">{$_('sales.card')}</option>
               </select>
             </div>
 
             <!-- Notes -->
             <div>
-              <label for="notes" class="label">Notes (Optional)</label>
+              <label for="notes" class="label">{$_('sales.notes')}</label>
               <textarea
                 id="notes"
                 bind:value={saleData.notes}
                 rows="3"
                 class="input"
-                placeholder="Additional notes..."
+                placeholder={$_('sales.notesPlaceholder')}
               ></textarea>
             </div>
           </div>
@@ -468,6 +468,6 @@
   <BarcodeScanner
     onScan={handleBarcodeScanned}
     onClose={() => showBarcodeScanner = false}
-    title="Scan Product Barcode"
+    title={$_('forms.scanProductBarcode')}
   />
 {/if}

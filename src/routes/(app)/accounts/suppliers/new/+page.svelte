@@ -115,7 +115,7 @@
               class="input"
               value={form?.nameEn ?? ''}
               dir="ltr"
-              placeholder="Enter supplier company name in English"
+              placeholder={$_('suppliers.enterCompanyNameEnglish')}
             />
           </div>
 
@@ -196,7 +196,7 @@
               rows="3"
               class="input pl-10"
               value={form?.address ?? ''}
-              placeholder="Enter supplier business address"
+              placeholder={$_('suppliers.enterBusinessAddress')}
             ></textarea>
           </div>
         </div>

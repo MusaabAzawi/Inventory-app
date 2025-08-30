@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { _ } from 'svelte-i18n';
   import Header from '$lib/components/layout/Header.svelte';
   import Sidebar from '$lib/components/layout/Sidebar.svelte';
   import NotificationContainer from '$lib/components/ui/NotificationContainer.svelte';
@@ -46,7 +47,7 @@
     }}
     role="button"
     tabindex="0"
-    aria-label="Close sidebar"
+    aria-label={$_('ui.closeSidebar')}
   >
     <Sidebar bind:open={sidebarOpen} />
   </div>

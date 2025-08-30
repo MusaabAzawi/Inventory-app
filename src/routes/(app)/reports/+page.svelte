@@ -20,11 +20,11 @@
   let startDate = $page.url.searchParams.get('startDate') || '';
   let endDate = $page.url.searchParams.get('endDate') || '';
 
-  const reportTypes = [
-    { id: 'overview', label: 'Overview Report', icon: TrendingUp },
-    { id: 'sales', label: 'Sales Report', icon: ShoppingCart },
-    { id: 'inventory', label: 'Inventory Report', icon: Package },
-    { id: 'products', label: 'Products Report', icon: FileText }
+  $: reportTypes = [
+    { id: 'overview', label: $_('reports.overviewReport'), icon: TrendingUp },
+    { id: 'sales', label: $_('reports.salesReport'), icon: ShoppingCart },
+    { id: 'inventory', label: $_('reports.inventoryReport'), icon: Package },
+    { id: 'products', label: $_('reports.productsReport'), icon: FileText }
   ];
 
   function generateReport() {
@@ -38,7 +38,7 @@
 
   function exportReport() {
     // Implement export functionality
-    alert('Export functionality would be implemented here');
+    alert($_('reports.exportFunctionality'));
   }
 
   function formatCurrency(amount: number) {
@@ -61,7 +61,7 @@
         {$_('nav.reports')}
       </h1>
       <p class="text-gray-600 dark:text-gray-400 mt-1">
-        Generate and view detailed business reports
+        {$_('reports.subtitle')}
       </p>
     </div>
     
@@ -71,7 +71,7 @@
         class="btn-secondary btn-md"
       >
         <Download class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
-        Export
+{$_('reports.export')}
       </button>
     </div>
   </div>
@@ -79,13 +79,13 @@
   <!-- Report Controls -->
   <div class="bg-white rounded-lg shadow p-6 dark:bg-gray-800">
     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-      Report Settings
+      {$_('reports.reportSettings')}
     </h2>
     
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
       <!-- Report Type -->
       <div>
-        <label for="report-type-select" class="label">Report Type</label>
+        <label for="report-type-select" class="label">{$_('reports.reportType')}</label>
         <select id="report-type-select" bind:value={reportType} class="input">
           {#each reportTypes as type}
             <option value={type.id}>{type.label}</option>
@@ -95,13 +95,13 @@
 
       <!-- Start Date -->
       <div>
-        <label for="start-date-input" class="label">Start Date</label>
+        <label for="start-date-input" class="label">{$_('reports.startDate')}</label>
         <input id="start-date-input" type="date" bind:value={startDate} class="input" />
       </div>
 
       <!-- End Date -->
       <div>
-        <label for="end-date-input" class="label">End Date</label>
+        <label for="end-date-input" class="label">{$_('reports.endDate')}</label>
         <input id="end-date-input" type="date" bind:value={endDate} class="input" />
       </div>
 
@@ -113,7 +113,7 @@
           aria-describedby="generate-report-description"
         >
           <Filter class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
-          Generate
+{$_('reports.generateReport')}
         </button>
       </div>
     </div>

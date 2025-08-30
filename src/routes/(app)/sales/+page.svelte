@@ -17,13 +17,13 @@
   
   export let data: PageData;
 
-  const columns = [
-    { key: 'invoiceNumber', label: 'Invoice #', sortable: true },
-    { key: 'customer', label: 'Customer', sortable: false },
-    { key: 'netAmount', label: 'Amount', sortable: true },
-    { key: 'paymentMethod', label: 'Payment', sortable: true },
-    { key: 'createdAt', label: 'Date', sortable: true },
-    { key: 'user.name', label: 'Staff', sortable: true }
+  $: columns = [
+    { key: 'invoiceNumber', label: $_('sales.invoiceNumber'), sortable: true },
+    { key: 'customer', label: $_('sales.customer'), sortable: false },
+    { key: 'netAmount', label: $_('sales.amount'), sortable: true },
+    { key: 'paymentMethod', label: $_('sales.payment'), sortable: true },
+    { key: 'createdAt', label: $_('sales.date'), sortable: true },
+    { key: 'user.name', label: $_('sales.staff'), sortable: true }
   ];
 
   function formatCurrency(amount: number) {
@@ -65,7 +65,7 @@
         {$_('modules.sales.title')}
       </h1>
       <p class="text-gray-600 dark:text-gray-400 mt-1">
-        Manage sales transactions and customer orders
+        {$_('sales.subtitle')}
       </p>
     </div>
     
@@ -88,13 +88,13 @@
           </div>
           <div class="ltr:ml-4 rtl:mr-4 flex-1">
             <p class="text-sm font-medium text-gray-600 dark:text-gray-300">
-              Today's Sales
+              {$_('sales.todaysSales')}
             </p>
             <p class="text-2xl font-semibold text-gray-900 dark:text-white">
               {formatCurrency(data.stats.today.amount)}
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-400">
-              {data.stats.today.count} transactions
+              {$_('sales.transactions', { values: { count: data.stats.today.count } })}
             </p>
           </div>
         </div>
@@ -108,13 +108,13 @@
           </div>
           <div class="ltr:ml-4 rtl:mr-4 flex-1">
             <p class="text-sm font-medium text-gray-600 dark:text-gray-300">
-              This Month
+              {$_('sales.thisMonth')}
             </p>
             <p class="text-2xl font-semibold text-gray-900 dark:text-white">
               {formatCurrency(data.stats.thisMonth.amount)}
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-400">
-              {data.stats.thisMonth.count} transactions
+              {$_('sales.transactions', { values: { count: data.stats.thisMonth.count } })}
             </p>
           </div>
         </div>
@@ -128,13 +128,13 @@
           </div>
           <div class="ltr:ml-4 rtl:mr-4 flex-1">
             <p class="text-sm font-medium text-gray-600 dark:text-gray-300">
-              Total Sales
+              {$_('sales.totalSales')}
             </p>
             <p class="text-2xl font-semibold text-gray-900 dark:text-white">
               {formatCurrency(data.stats.total.amount)}
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-400">
-              {data.stats.total.count} transactions
+              {$_('sales.transactions', { values: { count: data.stats.total.count } })}
             </p>
           </div>
         </div>
@@ -165,7 +165,7 @@
               {/if}
             </div>
           {:else}
-            <span class="text-gray-500 italic">Walk-in Customer</span>
+            <span class="text-gray-500 italic">{$_('sales.walkInCustomer')}</span>
           {/if}
         </td>
 
@@ -177,7 +177,7 @@
             </p>
             {#if item.discount > 0}
               <p class="text-xs text-gray-500 dark:text-gray-400">
-                Discount: {formatCurrency(item.discount)}
+                {$_('sales.discount', { values: { amount: formatCurrency(item.discount) } })}
               </p>
             {/if}
           </div>
@@ -186,7 +186,7 @@
         <!-- Payment Method -->
         <td class="px-6 py-4 whitespace-nowrap text-sm">
           <span class="px-2 py-1 text-xs font-medium rounded-full {getPaymentMethodColor(item.paymentMethod)}">
-            {item.paymentMethod}
+            {item.paymentMethod === 'CASH' ? $_('sales.cash') : item.paymentMethod === 'CREDIT' ? $_('sales.credit') : item.paymentMethod === 'CARD' ? $_('sales.card') : item.paymentMethod}
           </span>
         </td>
 
@@ -210,21 +210,21 @@
           <a 
             href="/sales/{item.id}" 
             class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-            title="View details"
+            title={$_('sales.viewDetails')}
           >
             <Eye class="h-4 w-4" />
           </a>
           <a 
             href="/sales/{item.id}/edit" 
             class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
-            title="Edit sale"
+            title={$_('sales.editSale')}
           >
             <Edit class="h-4 w-4" />
           </a>
           <a 
             href="/sales/{item.id}/return" 
             class="text-orange-600 hover:text-orange-900 dark:text-orange-400 dark:hover:text-orange-300"
-            title="Process return"
+            title={$_('sales.processReturn')}
           >
             <RotateCcw class="h-4 w-4" />
           </a>
@@ -236,27 +236,27 @@
   <!-- Quick Actions -->
   <div class="bg-white rounded-lg shadow p-6 dark:bg-gray-800">
     <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-      Quick Actions
+      {$_('sales.quickActions')}
     </h2>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
       <a href="/sales/new" class="flex flex-col items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors dark:bg-green-900 dark:hover:bg-green-800">
         <Plus class="h-8 w-8 text-green-600 mb-2" />
-        <span class="text-sm font-medium text-green-900 dark:text-green-100">New Sale</span>
+        <span class="text-sm font-medium text-green-900 dark:text-green-100">{$_('sales.newSale')}</span>
       </a>
       
       <a href="/sales/returns" class="flex flex-col items-center p-4 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors dark:bg-orange-900 dark:hover:bg-orange-800">
         <RotateCcw class="h-8 w-8 text-orange-600 mb-2" />
-        <span class="text-sm font-medium text-orange-900 dark:text-orange-100">Process Returns</span>
+        <span class="text-sm font-medium text-orange-900 dark:text-orange-100">{$_('sales.processReturns')}</span>
       </a>
       
       <a href="/customers" class="flex flex-col items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors dark:bg-blue-900 dark:hover:bg-blue-800">
         <ShoppingCart class="h-8 w-8 text-blue-600 mb-2" />
-        <span class="text-sm font-medium text-blue-900 dark:text-blue-100">View Customers</span>
+        <span class="text-sm font-medium text-blue-900 dark:text-blue-100">{$_('sales.viewCustomers')}</span>
       </a>
       
       <a href="/reports?type=sales" class="flex flex-col items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors dark:bg-purple-900 dark:hover:bg-purple-800">
         <TrendingUp class="h-8 w-8 text-purple-600 mb-2" />
-        <span class="text-sm font-medium text-purple-900 dark:text-purple-100">Sales Reports</span>
+        <span class="text-sm font-medium text-purple-900 dark:text-purple-100">{$_('sales.salesReports')}</span>
       </a>
     </div>
   </div>

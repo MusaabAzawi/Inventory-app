@@ -80,14 +80,14 @@
         {$_('modules.accounts.title')}
       </h1>
       <p class="text-gray-600 dark:text-gray-400 mt-1">
-        Manage customers and suppliers
+        {$_('accounts.subtitle')}
       </p>
     </div>
     
     <div class="flex gap-2">
       <a href="/accounts/customers/new" class="btn-secondary btn-md">
         <Plus class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
-        Add Customer
+{$_('accounts.addCustomer')}
       </a>
       <a href="/accounts/suppliers/new" class="btn-primary btn-md">
         <Plus class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
@@ -106,13 +106,13 @@
         </div>
         <div class="ltr:ml-4 rtl:mr-4 flex-1">
           <p class="text-sm font-medium text-gray-600 dark:text-gray-300">
-            Total Customers
+            {$_('accounts.totalCustomers')}
           </p>
           <p class="text-2xl font-semibold text-gray-900 dark:text-white">
             {stats.customers.total}
           </p>
           <p class="text-xs text-gray-500 dark:text-gray-400">
-            {stats.customers.active} active
+            {stats.customers.active} {$_('accounts.activeCustomers').toLowerCase()}
           </p>
         </div>
       </div>
@@ -126,13 +126,13 @@
         </div>
         <div class="ltr:ml-4 rtl:mr-4 flex-1">
           <p class="text-sm font-medium text-gray-600 dark:text-gray-300">
-            Total Suppliers
+            {$_('accounts.totalSuppliers')}
           </p>
           <p class="text-2xl font-semibold text-gray-900 dark:text-white">
             {stats.suppliers.total}
           </p>
           <p class="text-xs text-gray-500 dark:text-gray-400">
-            {stats.suppliers.active} active
+            {stats.suppliers.active} {$_('accounts.activeSuppliers').toLowerCase()}
           </p>
         </div>
       </div>

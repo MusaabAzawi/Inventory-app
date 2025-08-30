@@ -34,7 +34,7 @@
         // Product found - highlight it or navigate to it
         const productName = $locale === 'ar' ? result.product.nameAr : result.product.nameEn;
         
-        if (confirm(`Product found: "${productName}" (${result.product.sku})\n\nOpen product details?`)) {
+        if (confirm($_('inventory.productFound', { values: { name: productName, sku: result.product.sku } }))) {
           window.location.href = `/inventory/products/${result.product.id}`;
         } else {
           // Set search to highlight the product
@@ -42,13 +42,13 @@
         }
       } else {
         // Product not found - offer to create new one
-        if (confirm(`Product with barcode "${barcode}" not found.\n\nCreate new product with this barcode?`)) {
+        if (confirm($_('inventory.productNotFound', { values: { barcode } }))) {
           window.location.href = `/inventory/products/new?barcode=${encodeURIComponent(barcode)}`;
         }
       }
     } catch (error) {
       console.error('Barcode lookup error:', error);
-      alert('Error looking up product. Please try again.');
+      alert($_('inventory.barcodeError'));
     }
   }
   
@@ -66,7 +66,7 @@
       </h1>
       {#if scanResult}
         <p class="text-sm text-gray-500 mt-1">
-          Last scanned: {scanResult}
+          {$_('inventory.lastScanned', { values: { barcode: scanResult } })}
         </p>
       {/if}
     </div>
@@ -79,13 +79,13 @@
       >
         <Scan class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
         <span class="hidden sm:inline">{$_('modules.inventory.scanBarcode')}</span>
-        <span class="sm:hidden">Scan</span>
+        <span class="sm:hidden">{$_('inventory.scan')}</span>
       </button>
       
       <a href="/inventory/products/new" class="btn-primary btn-md touch-manipulation">
         <Plus class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
         <span class="hidden sm:inline">{$_('modules.inventory.addProduct')}</span>
-        <span class="sm:hidden">Add</span>
+        <span class="sm:hidden">{$_('inventory.add')}</span>
       </a>
     </div>
   </div>
@@ -130,6 +130,6 @@
   <BarcodeScanner
     onScan={handleBarcodeScan}
     onClose={() => showScanner = false}
-    title="Scan to Find Product"
+    title={$_('inventory.scanToFind')}
   />
 {/if}
