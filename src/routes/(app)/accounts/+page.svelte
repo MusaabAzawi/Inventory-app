@@ -321,7 +321,7 @@
         <span class="text-sm font-medium text-green-900 dark:text-green-100">{$_('modules.accounts.addSupplier')}</span>
       </a>
       
-      <a href="/reports?type=accounts" class="flex flex-col items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors dark:bg-purple-900 dark:hover:bg-purple-800">
+      <a href="/accounts/balances" class="flex flex-col items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors dark:bg-purple-900 dark:hover:bg-purple-800">
         <DollarSign class="h-8 w-8 text-purple-600 mb-2" />
         <span class="text-sm font-medium text-purple-900 dark:text-purple-100">{$_('modules.reports.accountBalances')}</span>
       </a>
