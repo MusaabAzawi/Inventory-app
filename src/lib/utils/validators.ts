@@ -26,7 +26,8 @@ export const productSchema = z.object({
   costPrice: z.number().positive(),
   sellingPrice: z.number().positive(),
   categoryId: z.string().optional().nullable(),
-  location: z.string().optional().nullable()
+  location: z.string().optional().nullable(),
+  expiryDate: z.string().optional().nullable().transform(val => val ? new Date(val) : null)
 });
 
 export const saleSchema = z.object({

@@ -3,6 +3,7 @@
     "dashboard": "Dashboard",
     "sales": "Sales",
     "inventory": "Inventory",
+    "categories": "Categories",
     "purchases": "Purchases",
     "cash": "Cash",
     "accounts": "Accounts",
@@ -128,6 +129,12 @@
     "supplier": "Supplier",
     "category": "Category",
     "unit": "Unit",
+    "expiryDate": "Expiry Date",
+    "expiringItems": "Expiring Items",
+    "expiryAlert": "Expiry Alert",
+    "expiresOn": "Expires on",
+    "expired": "Expired",
+    "expiryWarning": "Expiring Soon",
     "addProduct": "Add Product",
     "editProduct": "Edit Product",
     "deleteProduct": "Delete Product",
@@ -446,6 +453,45 @@
     "salaryReferenceIdHint": "Internal payroll or HR reference number",
     "period": "Period"
   },
+  "employees": {
+    "title": "Employee Management",
+    "addEmployee": "Add Employee",
+    "editEmployee": "Edit Employee",
+    "deleteEmployee": "Delete Employee",
+    "employeeName": "Employee Name",
+    "nameEnglish": "English Name",
+    "nameArabic": "Arabic Name",
+    "email": "Email",
+    "phone": "Phone",
+    "position": "Position",
+    "salary": "Salary",
+    "hireDate": "Hire Date",
+    "active": "Active",
+    "inactive": "Inactive",
+    "totalEmployees": "Total Employees",
+    "activeEmployees": "Active Employees",
+    "selectEmployee": "Select Employee",
+    "employeeList": "Employee List"
+  },
+  "expenseCategories": {
+    "title": "Expense Categories",
+    "fuelGas": "Fuel & Gas",
+    "foodMeals": "Food & Meals",
+    "vehicleCar": "Vehicle & Car Expenses",
+    "generalOperational": "General Operational Expenses",
+    "selectCategory": "Select Expense Category",
+    "category": "Category",
+    "systemCategory": "System Category",
+    "cannotEdit": "System categories cannot be edited"
+  },
+  "currency": {
+    "usd": "US Dollar",
+    "iqd": "Iraqi Dinar",
+    "exchangeRate": "Exchange Rate",
+    "converted": "Converted",
+    "original": "Original",
+    "currencyCode": "Currency Code"
+  },
   "forms": {
     "scanProductBarcode": "Scan Product Barcode"
   },
@@ -464,6 +510,7 @@
     "salesReport": "Sales Report",
     "inventoryReport": "Inventory Report",
     "productsReport": "Products Report",
+    "employeesReport": "Employees Report",
     "exportFunctionality": "Export functionality would be implemented here"
   }
 }

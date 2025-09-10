@@ -10,7 +10,8 @@
     TrendingUp, 
     Package, 
     ShoppingCart,
-    Filter
+    Filter,
+    UserCheck
   } from 'lucide-svelte';
   import type { PageData } from './$types';
   
@@ -24,7 +25,8 @@
     { id: 'overview', label: $_('reports.overviewReport'), icon: TrendingUp },
     { id: 'sales', label: $_('reports.salesReport'), icon: ShoppingCart },
     { id: 'inventory', label: $_('reports.inventoryReport'), icon: Package },
-    { id: 'products', label: $_('reports.productsReport'), icon: FileText }
+    { id: 'products', label: $_('reports.productsReport'), icon: FileText },
+    { id: 'employees', label: $_('reports.employeesReport'), icon: UserCheck }
   ];
 
   function generateReport() {
@@ -267,6 +269,101 @@
       {:else}
         <div class="p-6 text-center text-gray-500 dark:text-gray-400">
           No sales data found for the selected period.
+        </div>
+      {/if}
+    </div>
+
+  {:else if data.type === 'employees'}
+    <!-- Employee Report -->
+    <div class="bg-white rounded-lg shadow dark:bg-gray-800">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Employee Report</h3>
+      </div>
+      
+      {#if data.data?.employees?.length}
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700" role="table">
+            <thead class="bg-gray-50 dark:bg-gray-700">
+              <tr>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Name</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Position</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Email</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Phone</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Salary</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Status</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Hire Date</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
+              {#each data.data.employees as employee}
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div>
+                      <p class="text-sm font-medium text-gray-900 dark:text-white">
+                        {$locale === 'ar' ? employee.nameAr : employee.nameEn}
+                      </p>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                    {employee.position || '-'}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    {employee.email || '-'}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    {employee.phone || '-'}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                    {#if employee.salary}
+                      {new Intl.NumberFormat('ar-IQ', {
+                        style: 'decimal',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                      }).format(employee.salary)} د.ع
+                    {:else}
+                      -
+                    {/if}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {employee.isActive ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'}">
+                      {employee.isActive ? $_('employees.active') : $_('employees.inactive')}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    {formatDate(employee.hireDate)}
+                  </td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Employee Summary -->
+        <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div>
+              <span class="text-gray-600 dark:text-gray-300">Total Employees:</span>
+              <span class="font-semibold text-gray-900 dark:text-white ml-2">{data.data.employees.length}</span>
+            </div>
+            <div>
+              <span class="text-gray-600 dark:text-gray-300">Active Employees:</span>
+              <span class="font-semibold text-green-600 dark:text-green-400 ml-2">{data.data.employees.filter(e => e.isActive).length}</span>
+            </div>
+            <div>
+              <span class="text-gray-600 dark:text-gray-300">Total Monthly Payroll:</span>
+              <span class="font-semibold text-gray-900 dark:text-white ml-2">
+                {new Intl.NumberFormat('ar-IQ', {
+                  style: 'decimal',
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0
+                }).format(data.data.employees.filter(e => e.isActive && e.salary).reduce((sum, e) => sum + (e.salary || 0), 0))} د.ع
+              </span>
+            </div>
+          </div>
+        </div>
+      {:else}
+        <div class="p-6 text-center text-gray-500 dark:text-gray-400">
+          No employee data found.
         </div>
       {/if}
     </div>

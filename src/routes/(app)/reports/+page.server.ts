@@ -28,6 +28,8 @@ export const load: PageServerLoad = async ({ url, locals }) => {
         return await generateInventoryReport();
       case 'products':
         return await generateProductsReport(dateFilter);
+      case 'employees':
+        return await generateEmployeesReport(dateFilter);
       default:
         return await generateOverviewReport(dateFilter);
     }
@@ -129,5 +131,19 @@ async function generateProductsReport(dateFilter: any) {
   return {
     type: 'products',
     data: { products: productsData }
+  };
+}
+
+async function generateEmployeesReport(dateFilter: any) {
+  const employeesData = await prisma.employee.findMany({
+    orderBy: [
+      { isActive: 'desc' },
+      { nameEn: 'asc' }
+    ]
+  });
+
+  return {
+    type: 'employees',
+    data: { employees: employeesData }
   };
 }

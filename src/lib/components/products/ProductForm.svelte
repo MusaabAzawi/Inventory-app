@@ -15,8 +15,8 @@
   
   $: isEdit = !!product;
   
-  // Form data with defaults
-  $: formData = {
+  // Form data with defaults (mutable for category selection)
+  let formData = {
     nameEn: form?.nameEn ?? product?.nameEn ?? '',
     nameAr: form?.nameAr ?? product?.nameAr ?? '',
     sku: form?.sku ?? product?.sku ?? '',
@@ -26,8 +26,31 @@
     costPrice: form?.costPrice ?? product?.costPrice ?? 0,
     sellingPrice: form?.sellingPrice ?? product?.sellingPrice ?? 0,
     categoryId: form?.categoryId ?? product?.categoryId ?? '',
-    location: form?.location ?? product?.location ?? ''
+    location: form?.location ?? product?.location ?? '',
+    expiryDate: form?.expiryDate ?? (product?.expiryDate ? new Date(product.expiryDate).toISOString().split('T')[0] : '')
   };
+
+  // Update formData when form prop changes (for server-side validation errors)
+  $: if (form) {
+    formData = {
+      nameEn: form?.nameEn ?? product?.nameEn ?? '',
+      nameAr: form?.nameAr ?? product?.nameAr ?? '',
+      sku: form?.sku ?? product?.sku ?? '',
+      barcode: form?.barcode ?? product?.barcode ?? '',
+      quantity: form?.quantity ?? product?.quantity ?? 0,
+      minQuantity: form?.minQuantity ?? product?.minQuantity ?? 5,
+      costPrice: form?.costPrice ?? product?.costPrice ?? 0,
+      sellingPrice: form?.sellingPrice ?? product?.sellingPrice ?? 0,
+      categoryId: form?.categoryId ?? product?.categoryId ?? '',
+      location: form?.location ?? product?.location ?? '',
+      expiryDate: form?.expiryDate ?? (product?.expiryDate ? new Date(product.expiryDate).toISOString().split('T')[0] : '')
+    };
+  }
+
+  // Check if selected category is Food
+  $: selectedCategory = categories.find(cat => cat.id === formData.categoryId);
+  $: isFoodCategory = selectedCategory && selectedCategory.nameEn === 'Food';
+  
 
   function handleBarcodeScanned(barcode: string) {
     formData.barcode = barcode;
@@ -74,6 +97,11 @@
       notifications.error('Validation Error', 'Selling price must be greater than 0');
       return false;
     }
+    // Validate expiry date for food category
+    if (isFoodCategory && !formData.expiryDate?.trim()) {
+      notifications.error('Validation Error', 'Expiry date is required for food items');
+      return false;
+    }
     return true;
   }
 
@@ -106,10 +134,12 @@
 <form 
   method="POST" 
   use:enhance={handleSubmit}
-  on:submit={() => {
+  on:submit|preventDefault={() => {
     if (validateForm()) {
       isSubmitting = true;
+      return true;
     }
+    return false;
   }}
   class="space-y-6"
 >
@@ -131,7 +161,7 @@
         type="text"
         required
         class="input"
-        value={formData.nameEn}
+        bind:value={formData.nameEn}
         dir="ltr"
         placeholder="Enter product name in English"
       />
@@ -148,7 +178,7 @@
         type="text"
         required
         class="input"
-        value={formData.nameAr}
+        bind:value={formData.nameAr}
         dir="rtl"
         placeholder="أدخل اسم المنتج بالعربية"
       />
@@ -166,7 +196,7 @@
           type="text"
           required
           class="input flex-1"
-          value={formData.sku}
+          bind:value={formData.sku}
           placeholder="PRD-XXX-123456"
         />
         <button
@@ -193,7 +223,7 @@
           name="barcode"
           type="text"
           class="input flex-1"
-          value={formData.barcode}
+          bind:value={formData.barcode}
           placeholder="Scan or enter barcode"
         />
         <button
@@ -217,7 +247,7 @@
         id="categoryId"
         name="categoryId"
         class="input"
-        value={formData.categoryId}
+        bind:value={formData.categoryId}
       >
         <option value="">{$_('common.select')} {$_('product.category')}</option>
         {#each categories as category}
@@ -238,10 +268,30 @@
         name="location"
         type="text"
         class="input"
-        value={formData.location}
+        bind:value={formData.location}
         placeholder="Shelf A1, Warehouse 1, etc."
       />
     </div>
+
+    <!-- Expiry Date (for Food category only) -->
+    {#if isFoodCategory}
+      <div>
+        <label for="expiryDate" class="label">
+          {$_('product.expiryDate')} <span class="text-red-500">*</span>
+        </label>
+        <input
+          id="expiryDate"
+          name="expiryDate"
+          type="date"
+          required={isFoodCategory}
+          class="input"
+          bind:value={formData.expiryDate}
+        />
+        <p class="text-sm text-gray-500 mt-1">
+          Expiry date is required for food items
+        </p>
+      </div>
+    {/if}
 
     <!-- Quantity -->
     <div>
@@ -255,7 +305,7 @@
         min="0"
         required
         class="input"
-        value={formData.quantity}
+        bind:value={formData.quantity}
       />
     </div>
 
@@ -271,7 +321,7 @@
         min="0"
         required
         class="input"
-        value={formData.minQuantity}
+        bind:value={formData.minQuantity}
       />
     </div>
 
@@ -281,16 +331,16 @@
         {$_('product.costPrice')} <span class="text-red-500">*</span>
       </label>
       <div class="relative">
-        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">د.ع</span>
         <input
           id="costPrice"
           name="costPrice"
           type="number"
-          step="0.01"
-          min="0.01"
+          step="1"
+          min="1"
           required
-          class="input pl-8"
-          value={formData.costPrice}
+          class="input pl-10"
+          bind:value={formData.costPrice}
         />
       </div>
     </div>
@@ -301,16 +351,16 @@
         {$_('product.sellingPrice')} <span class="text-red-500">*</span>
       </label>
       <div class="relative">
-        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">د.ع</span>
         <input
           id="sellingPrice"
           name="sellingPrice"
           type="number"
-          step="0.01"
-          min="0.01"
+          step="1"
+          min="1"
           required
-          class="input pl-8"
-          value={formData.sellingPrice}
+          class="input pl-10"
+          bind:value={formData.sellingPrice}
         />
       </div>
     </div>

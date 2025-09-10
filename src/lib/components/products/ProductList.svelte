@@ -2,7 +2,7 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
   import { locale } from 'svelte-i18n';
-  import { Edit, Trash2, AlertTriangle, Eye } from 'lucide-svelte';
+  import { Trash2, AlertTriangle, Eye } from 'lucide-svelte';
   import DataTable from '$lib/components/ui/DataTable.svelte';
   import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
   import { notifications } from '$lib/stores/notifications';
@@ -93,10 +93,12 @@
   }
 
   function formatPrice(price: number) {
-    return new Intl.NumberFormat($locale === 'ar' ? 'ar-SA' : 'en-US', {
-      style: 'currency',
-      currency: 'USD'
+    const formatted = new Intl.NumberFormat('ar-IQ', {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
     }).format(price);
+    return `${formatted} د.ع`;
   }
 </script>
 
@@ -170,17 +172,10 @@
     <div class="flex justify-end gap-2">
       <a 
         href="/inventory/products/{item.id}" 
-        class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
-        title="View details"
+        class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+        title="View & Edit details"
       >
         <Eye class="h-4 w-4" />
-      </a>
-      <a 
-        href="/inventory/products/{item.id}/edit" 
-        class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-        title="Edit product"
-      >
-        <Edit class="h-4 w-4" />
       </a>
       <button 
         on:click={() => confirmDelete(item)}

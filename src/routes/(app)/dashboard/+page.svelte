@@ -153,10 +153,12 @@
   }
 
   function formatCurrency(amount: number) {
-    return new Intl.NumberFormat($locale === 'ar' ? 'ar-SA' : 'en-US', {
-      style: 'currency',
-      currency: 'USD'
+    const formatted = new Intl.NumberFormat('ar-IQ', {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
     }).format(amount);
+    return `${formatted} د.ع`;
   }
 
   function formatDate(date: string) {

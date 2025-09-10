@@ -8,8 +8,10 @@
     ShoppingBag, 
     DollarSign, 
     Users, 
+    UserCheck,
     FileText, 
-    Settings 
+    Settings,
+    FolderOpen
   } from 'lucide-svelte';
   
   export let open = true;
@@ -18,9 +20,11 @@
     { name: 'nav.dashboard', href: '/dashboard', icon: Home },
     { name: 'nav.sales', href: '/sales', icon: ShoppingCart },
     { name: 'nav.inventory', href: '/inventory', icon: Package },
+    { name: 'nav.categories', href: '/categories', icon: FolderOpen },
     { name: 'nav.purchases', href: '/purchases', icon: ShoppingBag },
     { name: 'nav.cash', href: '/cash', icon: DollarSign },
     { name: 'nav.accounts', href: '/accounts', icon: Users },
+    { name: 'employees.title', href: '/employees', icon: UserCheck },
     { name: 'nav.reports', href: '/reports', icon: FileText },
     { name: 'nav.settings', href: '/settings', icon: Settings },
   ];

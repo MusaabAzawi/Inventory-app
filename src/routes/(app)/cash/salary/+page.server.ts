@@ -9,7 +9,7 @@ const salarySchema = z.object({
   exchangeRate: z.number().positive(),
   description: z.string().min(1),
   referenceId: z.string().optional(),
-  employeeName: z.string().min(1),
+  employeeId: z.string().min(1),
   salaryPeriod: z.string().min(1),
   salaryType: z.enum(['MONTHLY', 'WEEKLY', 'DAILY', 'BONUS', 'OVERTIME']),
 });
@@ -20,7 +20,7 @@ export const load: PageServerLoad = async ({ locals }) => {
   }
 
   try {
-    const currencies = ['USD', 'SAR', 'AED', 'EUR'];
+    const currencies = ['USD', 'IQD', 'SAR', 'AED', 'EUR'];
     const salaryTypes = [
       { id: 'MONTHLY', label: 'Monthly Salary' },
       { id: 'WEEKLY', label: 'Weekly Salary' },
@@ -29,20 +29,23 @@ export const load: PageServerLoad = async ({ locals }) => {
       { id: 'OVERTIME', label: 'Overtime Payment' }
     ];
     
-    // Get all users as potential employees
-    const employees = await prisma.user.findMany({
+    // Get employees from the Employee model
+    const employees = await prisma.employee.findMany({
       select: {
         id: true,
-        name: true,
+        nameEn: true,
+        nameAr: true,
         email: true,
-        role: true
+        position: true,
+        salary: true
       },
-      orderBy: { name: 'asc' }
+      where: { isActive: true },
+      orderBy: { nameEn: 'asc' }
     });
     
     return {
       currencies,
-      defaultCurrency: 'USD',
+      defaultCurrency: 'IQD',
       salaryTypes,
       employees
     };
@@ -50,7 +53,7 @@ export const load: PageServerLoad = async ({ locals }) => {
     console.error('Error loading salary page:', error);
     return {
       currencies: ['USD'],
-      defaultCurrency: 'USD',
+      defaultCurrency: 'IQD',
       salaryTypes: [
         { id: 'MONTHLY', label: 'Monthly Salary' },
         { id: 'WEEKLY', label: 'Weekly Salary' },
@@ -72,11 +75,11 @@ export const actions: Actions = {
     try {
       const formData = await request.formData();
       const amount = parseFloat(formData.get('amount')?.toString() || '0');
-      const currency = formData.get('currency')?.toString() || 'USD';
+      const currency = formData.get('currency')?.toString() || 'IQD';
       const exchangeRate = parseFloat(formData.get('exchangeRate')?.toString() || '1');
       const description = formData.get('description')?.toString() || '';
       const referenceId = formData.get('referenceId')?.toString() || undefined;
-      const employeeName = formData.get('employeeName')?.toString() || '';
+      const employeeId = formData.get('employeeId')?.toString() || '';
       const salaryPeriod = formData.get('salaryPeriod')?.toString() || '';
       const salaryType = formData.get('salaryType')?.toString() as 'MONTHLY' | 'WEEKLY' | 'DAILY' | 'BONUS' | 'OVERTIME' || 'MONTHLY';
 
@@ -86,10 +89,19 @@ export const actions: Actions = {
         exchangeRate,
         description,
         referenceId: referenceId || undefined,
-        employeeName,
+        employeeId,
         salaryPeriod,
         salaryType,
       });
+
+      // Get employee details for description
+      const employee = await prisma.employee.findUnique({
+        where: { id: validatedData.employeeId }
+      });
+
+      if (!employee) {
+        return fail(400, { error: 'Employee not found' });
+      }
 
       await prisma.cashTransaction.create({
         data: {
@@ -97,9 +109,10 @@ export const actions: Actions = {
           amount: validatedData.amount,
           currency: validatedData.currency,
           exchangeRate: validatedData.exchangeRate,
-          description: `${validatedData.salaryType} salary for ${validatedData.employeeName} - ${validatedData.salaryPeriod}: ${validatedData.description}`,
+          description: `${validatedData.salaryType} salary for ${employee.nameEn} - ${validatedData.salaryPeriod}: ${validatedData.description}`,
           referenceId: validatedData.referenceId,
           userId: locals.user.id,
+          employeeId: validatedData.employeeId,
           status: 'COMPLETED'
         }
       });

@@ -36,7 +36,8 @@ export const actions: Actions = {
       costPrice: parseFloat(formData.get('costPrice')?.toString() || '0'),
       sellingPrice: parseFloat(formData.get('sellingPrice')?.toString() || '0'),
       categoryId: formData.get('categoryId')?.toString() || null,
-      location: formData.get('location')?.toString() || null
+      location: formData.get('location')?.toString() || null,
+      expiryDate: formData.get('expiryDate')?.toString() || null
     };
 
     try {

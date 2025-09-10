@@ -45,6 +45,12 @@ async function main() {
       nameAr: 'ملابس',
       descriptionEn: 'Apparel and fashion items',
       descriptionAr: 'ملابس وأزياء'
+    },
+    {
+      nameEn: 'Food',
+      nameAr: 'طعام',
+      descriptionEn: 'Food items and consumables',
+      descriptionAr: 'المواد الغذائية والمواد الاستهلاكية'
     }
   ];
 
@@ -185,7 +191,7 @@ async function main() {
   const defaultSettings = [
     { key: 'companyNameEn', value: 'Inventory Pro', type: 'STRING' },
     { key: 'companyNameAr', value: 'نظام المخزون', type: 'STRING' },
-    { key: 'defaultCurrency', value: 'USD', type: 'STRING' },
+    { key: 'defaultCurrency', value: 'IQD', type: 'STRING' },
     { key: 'lowStockThreshold', value: '10', type: 'NUMBER' },
     { key: 'autoBackup', value: 'true', type: 'BOOLEAN' }
   ];
@@ -200,6 +206,104 @@ async function main() {
 
   console.log('✅ Default settings created');
 
+  // Create predefined expense categories
+  const expenseCategories = [
+    {
+      nameEn: 'Fuel & Gas',
+      nameAr: 'وقود وغاز',
+      isSystem: true
+    },
+    {
+      nameEn: 'Food & Meals',
+      nameAr: 'طعام ووجبات',
+      isSystem: true
+    },
+    {
+      nameEn: 'Vehicle & Car Expenses',
+      nameAr: 'مصاريف المركبات والسيارات',
+      isSystem: true
+    },
+    {
+      nameEn: 'General Operational Expenses',
+      nameAr: 'المصاريف التشغيلية العامة',
+      isSystem: true
+    }
+  ];
+
+  for (const category of expenseCategories) {
+    await prisma.expenseCategory.upsert({
+      where: { nameEn: category.nameEn },
+      update: {},
+      create: category
+    });
+  }
+
+  console.log('✅ Expense categories created:', expenseCategories.length);
+
+  // Create default account types
+  const accountTypes = [
+    {
+      nameEn: 'Employee Accounts',
+      nameAr: 'حسابات الموظفين',
+      code: 'EMP'
+    },
+    {
+      nameEn: 'Expense Accounts',
+      nameAr: 'حسابات المصروفات',
+      code: 'EXP'
+    },
+    {
+      nameEn: 'Asset Accounts',
+      nameAr: 'حسابات الأصول',
+      code: 'AST'
+    },
+    {
+      nameEn: 'Liability Accounts',
+      nameAr: 'حسابات الخصوم',
+      code: 'LIB'
+    }
+  ];
+
+  for (const accountType of accountTypes) {
+    await prisma.accountType.upsert({
+      where: { code: accountType.code },
+      update: {},
+      create: accountType
+    });
+  }
+
+  console.log('✅ Account types created:', accountTypes.length);
+
+  // Create sample employees
+  const employees = [
+    {
+      nameEn: 'Ahmed Hassan',
+      nameAr: 'أحمد حسن',
+      email: 'ahmed@company.com',
+      phone: '+964-770-123-4567',
+      position: 'Store Manager',
+      salary: 1500.00
+    },
+    {
+      nameEn: 'Fatima Ali',
+      nameAr: 'فاطمة علي',
+      email: 'fatima@company.com',
+      phone: '+964-770-234-5678',
+      position: 'Sales Associate',
+      salary: 800.00
+    }
+  ];
+
+  for (const employee of employees) {
+    await prisma.employee.upsert({
+      where: { email: employee.email },
+      update: {},
+      create: employee
+    });
+  }
+
+  console.log('✅ Sample employees created:', employees.length);
+
   console.log(`
 🎉 Database setup complete!
 
@@ -208,10 +312,13 @@ async function main() {
    Password: admin123
 
 📊 Sample Data Created:
-   - ${categories.length} categories
+   - ${categories.length} product categories
    - ${products.length} products
    - 1 customer
    - 1 supplier
+   - ${expenseCategories.length} expense categories
+   - ${accountTypes.length} account types
+   - ${employees.length} sample employees
    - Inventory history records
    - Default settings
 

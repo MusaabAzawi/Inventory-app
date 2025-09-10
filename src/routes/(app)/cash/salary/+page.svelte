@@ -24,11 +24,11 @@
   let exchangeRate = 1;
   let description = '';
   let referenceId = '';
-  let employeeName = '';
+  let employeeId = '';
   let salaryPeriod = '';
   let salaryType = 'MONTHLY';
 
-  $: formValid = amount && parseFloat(amount) > 0 && description.trim() && exchangeRate > 0 && employeeName.trim() && salaryPeriod.trim();
+  $: formValid = amount && parseFloat(amount) > 0 && description.trim() && exchangeRate > 0 && employeeId.trim() && salaryPeriod.trim();
 
   function resetForm() {
     amount = '';
@@ -36,12 +36,20 @@
     exchangeRate = 1;
     description = '';
     referenceId = '';
-    employeeName = '';
+    employeeId = '';
     salaryPeriod = '';
     salaryType = 'MONTHLY';
   }
 
-  function formatCurrency(value: number, curr: string = 'USD') {
+  function formatCurrency(value: number, curr: string = 'IQD') {
+    if (curr === 'IQD') {
+      const formatted = new Intl.NumberFormat('ar-IQ', {
+        style: 'decimal',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(value);
+      return `${formatted} د.ع`;
+    }
     return new Intl.NumberFormat($locale === 'ar' ? 'ar-SA' : 'en-US', {
       style: 'currency',
       currency: curr
@@ -50,16 +58,17 @@
 
   $: convertedAmount = amount ? parseFloat(amount) * exchangeRate : 0;
   
-  $: selectedEmployee = data.employees.find(e => e.name === employeeName);
+  $: selectedEmployee = data.employees.find(e => e.id === employeeId);
 
   function updateDescription() {
-    if (employeeName && salaryType) {
+    if (selectedEmployee && salaryType) {
       const typeLabel = data.salaryTypes.find(t => t.id === salaryType)?.label.toLowerCase() || 'salary';
+      const employeeName = $locale === 'ar' ? selectedEmployee.nameAr : selectedEmployee.nameEn;
       description = `${typeLabel} payment for ${employeeName}${salaryPeriod ? ` - ${salaryPeriod}` : ''}`;
     }
   }
 
-  $: if (employeeName && salaryType) {
+  $: if (selectedEmployee && salaryType) {
     updateDescription();
   }
 
@@ -145,30 +154,30 @@
         <!-- Employee Selection -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label for="employeeName" class="label">
+            <label for="employeeId" class="label">
               {$_('cash.employee')} *
             </label>
             <div class="relative">
               <User class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                id="employeeName"
-                name="employeeName"
-                type="text"
-                bind:value={employeeName}
-                list="employees"
+              <select
+                id="employeeId"
+                name="employeeId"
+                bind:value={employeeId}
                 required
                 class="input pl-10"
-                placeholder={$_('cash.employeePlaceholder')}
-                class:border-red-300={form?.fields?.employeeName}
-              />
-              <datalist id="employees">
+                class:border-red-300={form?.fields?.employeeId}
+              >
+                <option value="">{$_('employees.selectEmployee')}</option>
                 {#each data.employees as employee}
-                  <option value={employee.name}>{employee.name} - {employee.role}</option>
+                  <option value={employee.id}>
+                    {$locale === 'ar' ? employee.nameAr : employee.nameEn}
+                    {#if employee.position} - {employee.position}{/if}
+                  </option>
                 {/each}
-              </datalist>
+              </select>
             </div>
-            {#if form?.fields?.employeeName}
-              <p class="text-sm text-red-600 mt-1">{form.fields.employeeName[0]}</p>
+            {#if form?.fields?.employeeId}
+              <p class="text-sm text-red-600 mt-1">{form.fields.employeeId[0]}</p>
             {/if}
           </div>
 
@@ -340,7 +349,7 @@
         </div>
 
         <!-- Salary Summary -->
-        {#if amount && parseFloat(amount) > 0 && employeeName}
+        {#if amount && parseFloat(amount) > 0 && selectedEmployee}
           <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 dark:bg-blue-900/20 dark:border-blue-800">
             <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
               {$_('cash.salarySummary')}
@@ -349,7 +358,7 @@
               <div class="flex justify-between text-sm">
                 <span class="text-blue-700 dark:text-blue-300">{$_('cash.employee')}:</span>
                 <span class="font-medium text-blue-900 dark:text-blue-100">
-                  {employeeName}
+                  {$locale === 'ar' ? selectedEmployee.nameAr : selectedEmployee.nameEn}
                 </span>
               </div>
               <div class="flex justify-between text-sm">

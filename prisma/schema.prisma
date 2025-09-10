@@ -37,6 +37,7 @@ model Product {
   sellingPrice Float
   categoryId   String?
   location     String?
+  expiryDate   DateTime?
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -195,20 +196,24 @@ model InventoryHistory {
 }
 
 model CashTransaction {
-  id           String   @id @default(cuid())
-  type         String   // RECEIPT, PAYMENT, SALARY, EXPENSE, TRANSFER
-  amount       Float
-  currency     String   @default("USD")
-  exchangeRate Float    @default(1.0)
-  description  String?
-  referenceId  String?  // Reference to sale/purchase/etc
-  userId       String
-  status       String   @default("COMPLETED") // COMPLETED, PENDING, CANCELLED
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default(cuid())
+  type             String   // RECEIPT, PAYMENT, SALARY, EXPENSE, TRANSFER
+  amount           Float
+  currency         String   @default("IQD")
+  exchangeRate     Float    @default(1.0)
+  description      String?
+  referenceId      String?  // Reference to sale/purchase/etc
+  userId           String
+  employeeId       String?  // For salary payments
+  expenseCategoryId String? // For expense payments
+  status           String   @default("COMPLETED") // COMPLETED, PENDING, CANCELLED
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
   
   // Relations
-  user         User     @relation(fields: [userId], references: [id])
+  user            User             @relation(fields: [userId], references: [id])
+  employee        Employee?        @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  expenseCategory ExpenseCategory? @relation(fields: [expenseCategoryId], references: [id], onDelete: SetNull)
 }
 
 model Agent {
@@ -230,4 +235,62 @@ model Settings {
   type      String   @default("STRING") // STRING, NUMBER, BOOLEAN, JSON
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Employee {
+  id        String   @id @default(cuid())
+  nameEn    String
+  nameAr    String
+  email     String?  @unique
+  phone     String?
+  position  String?
+  salary    Float?
+  hireDate  DateTime @default(now())
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  cashTransactions CashTransaction[]
+}
+
+model ExpenseCategory {
+  id        String   @id @default(cuid())
+  nameEn    String   @unique
+  nameAr    String   @unique
+  isSystem  Boolean  @default(true) // System categories cannot be modified
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  cashTransactions CashTransaction[]
+}
+
+model AccountType {
+  id        String   @id @default(cuid())
+  nameEn    String   @unique
+  nameAr    String   @unique
+  code      String   @unique // For accounting codes
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations  
+  accounts  Account[]
+}
+
+model Account {
+  id          String   @id @default(cuid())
+  nameEn      String
+  nameAr      String
+  accountTypeId String
+  balance     Float    @default(0)
+  currency    String   @default("IQD")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  accountType AccountType @relation(fields: [accountTypeId], references: [id])
 }
