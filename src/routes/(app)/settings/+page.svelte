@@ -30,7 +30,7 @@
     companyAddress: '123 Business Street',
     
     // System Settings
-    defaultCurrency: 'USD',
+    defaultCurrency: 'IQD',
     lowStockThreshold: 10,
     autoBackup: true,
     emailNotifications: true,
@@ -51,7 +51,7 @@
 
   function saveSettings() {
     // Implement save functionality
-    alert('Settings saved successfully!');
+    alert($_('settings.settingsSaved'));
   }
 </script>
 
@@ -62,7 +62,7 @@
       {$_('nav.settings')}
     </h1>
     <p class="text-gray-600 dark:text-gray-400 mt-1">
-      Configure system preferences and company information
+      {$_('settings.subtitle')}
     </p>
   </div>
 
@@ -70,36 +70,36 @@
     <!-- Settings Navigation -->
     <div class="bg-white rounded-lg shadow p-6 dark:bg-gray-800 h-fit">
       <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-        Settings Categories
+        {$_('settings.settingsCategories')}
       </h2>
       <nav class="space-y-2">
         <a href="#company" class="flex items-center p-3 text-gray-700 rounded-lg hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
           <Building class="h-5 w-5 ltr:mr-3 rtl:ml-3" />
-          Company Settings
+          {$_('settings.companySettings')}
         </a>
         <a href="#system" class="flex items-center p-3 text-gray-700 rounded-lg hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
           <Settings class="h-5 w-5 ltr:mr-3 rtl:ml-3" />
-          System Settings
+          {$_('settings.systemSettings')}
         </a>
         <a href="#display" class="flex items-center p-3 text-gray-700 rounded-lg hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
           <Palette class="h-5 w-5 ltr:mr-3 rtl:ml-3" />
-          Display Settings
+          {$_('settings.displaySettings')}
         </a>
         <a href="#notifications" class="flex items-center p-3 text-gray-700 rounded-lg hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
           <Bell class="h-5 w-5 ltr:mr-3 rtl:ml-3" />
-          Notifications
+          {$_('settings.notifications')}
         </a>
         <a href="#security" class="flex items-center p-3 text-gray-700 rounded-lg hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
           <Shield class="h-5 w-5 ltr:mr-3 rtl:ml-3" />
-          Security
+          {$_('settings.security')}
         </a>
         <a href="#users" class="flex items-center p-3 text-gray-700 rounded-lg hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
           <Users class="h-5 w-5 ltr:mr-3 rtl:ml-3" />
-          User Management
+          {$_('settings.userManagement')}
         </a>
         <a href="#backup" class="flex items-center p-3 text-gray-700 rounded-lg hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
           <Database class="h-5 w-5 ltr:mr-3 rtl:ml-3" />
-          Backup & Data
+          {$_('settings.backupData')}
         </a>
       </nav>
     </div>
@@ -111,13 +111,13 @@
         <div class="flex items-center mb-6">
           <Building class="h-6 w-6 text-blue-600 ltr:mr-3 rtl:ml-3" />
           <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-            Company Settings
+            {$_('settings.companySettings')}
           </h2>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label for="company-name-en" class="label">Company Name (English)</label>
+            <label for="company-name-en" class="label">{$_('settings.companyNameEnglish')}</label>
             <input 
               id="company-name-en"
               type="text" 
@@ -128,7 +128,7 @@
           </div>
           
           <div>
-            <label for="company-name-ar" class="label">Company Name (Arabic)</label>
+            <label for="company-name-ar" class="label">{$_('settings.companyNameArabic')}</label>
             <input 
               id="company-name-ar"
               type="text" 
@@ -139,7 +139,7 @@
           </div>
           
           <div>
-            <label for="company-email" class="label">Company Email</label>
+            <label for="company-email" class="label">{$_('settings.companyEmail')}</label>
             <input 
               id="company-email"
               type="email" 
@@ -149,7 +149,7 @@
           </div>
           
           <div>
-            <label for="company-phone" class="label">Company Phone</label>
+            <label for="company-phone" class="label">{$_('settings.companyPhone')}</label>
             <input 
               id="company-phone"
               type="tel" 
@@ -159,7 +159,7 @@
           </div>
           
           <div class="md:col-span-2">
-            <label for="company-address" class="label">Company Address</label>
+            <label for="company-address" class="label">{$_('settings.companyAddress')}</label>
             <textarea 
               id="company-address"
               bind:value={settings.companyAddress}
@@ -175,14 +175,15 @@
         <div class="flex items-center mb-6">
           <Settings class="h-6 w-6 text-green-600 ltr:mr-3 rtl:ml-3" />
           <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-            System Settings
+            {$_('settings.systemSettings')}
           </h2>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label for="default-currency" class="label">Default Currency</label>
+            <label for="default-currency" class="label">{$_('settings.defaultCurrency')}</label>
             <select id="default-currency" bind:value={settings.defaultCurrency} class="input">
+              <option value="IQD">IQD - Iraqi Dinar (د.ع)</option>
               <option value="USD">USD - US Dollar</option>
               <option value="EUR">EUR - Euro</option>
               <option value="GBP">GBP - British Pound</option>
@@ -192,7 +193,7 @@
           </div>
           
           <div>
-            <label for="low-stock-threshold" class="label">Low Stock Threshold</label>
+            <label for="low-stock-threshold" class="label">{$_('settings.lowStockThreshold')}</label>
             <input 
               id="low-stock-threshold"
               type="number" 
@@ -204,8 +205,8 @@
           
           <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg dark:border-gray-700">
             <div>
-              <h3 class="font-medium text-gray-900 dark:text-white">Auto Backup</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400">Automatically backup data daily</p>
+              <h3 class="font-medium text-gray-900 dark:text-white">{$_('settings.autoBackup')}</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400">{$_('settings.autoBackupDescription')}</p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" bind:checked={settings.autoBackup} class="sr-only peer" />
@@ -220,13 +221,13 @@
         <div class="flex items-center mb-6">
           <Palette class="h-6 w-6 text-purple-600 ltr:mr-3 rtl:ml-3" />
           <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-            Display Settings
+            {$_('settings.displaySettings')}
           </h2>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label for="default-language" class="label">Default Language</label>
+            <label for="default-language" class="label">{$_('settings.defaultLanguage')}</label>
             <select id="default-language" bind:value={settings.defaultLanguage} class="input">
               <option value="ar">العربية (Arabic)</option>
               <option value="en">English</option>
@@ -234,7 +235,7 @@
           </div>
           
           <div>
-            <label for="date-format" class="label">Date Format</label>
+            <label for="date-format" class="label">{$_('settings.dateFormat')}</label>
             <select id="date-format" bind:value={settings.dateFormat} class="input">
               <option value="DD/MM/YYYY">DD/MM/YYYY</option>
               <option value="MM/DD/YYYY">MM/DD/YYYY</option>
@@ -243,17 +244,17 @@
           </div>
           
           <div>
-            <label for="time-format" class="label">Time Format</label>
+            <label for="time-format" class="label">{$_('settings.timeFormat')}</label>
             <select id="time-format" bind:value={settings.timeFormat} class="input">
-              <option value="24h">24 Hour</option>
-              <option value="12h">12 Hour (AM/PM)</option>
+              <option value="24h">{$_('settings.24Hour')}</option>
+              <option value="12h">{$_('settings.12Hour')}</option>
             </select>
           </div>
           
           <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg dark:border-gray-700">
             <div>
-              <h3 class="font-medium text-gray-900 dark:text-white">Dark Mode</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400">Enable dark theme</p>
+              <h3 class="font-medium text-gray-900 dark:text-white">{$_('settings.darkMode')}</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400">{$_('settings.darkModeDescription')}</p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" bind:checked={settings.darkMode} class="sr-only peer" />
@@ -268,15 +269,15 @@
         <div class="flex items-center mb-6">
           <Bell class="h-6 w-6 text-yellow-600 ltr:mr-3 rtl:ml-3" />
           <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-            Notification Settings
+            {$_('settings.notificationSettings')}
           </h2>
         </div>
         
         <div class="space-y-4">
           <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg dark:border-gray-700">
             <div>
-              <h3 class="font-medium text-gray-900 dark:text-white">Email Notifications</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400">Receive notifications via email</p>
+              <h3 class="font-medium text-gray-900 dark:text-white">{$_('settings.emailNotifications')}</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400">{$_('settings.emailNotificationsDescription')}</p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" bind:checked={settings.emailNotifications} class="sr-only peer" />
@@ -286,8 +287,8 @@
           
           <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg dark:border-gray-700">
             <div>
-              <h3 class="font-medium text-gray-900 dark:text-white">SMS Notifications</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400">Receive notifications via SMS</p>
+              <h3 class="font-medium text-gray-900 dark:text-white">{$_('settings.smsNotifications')}</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400">{$_('settings.smsNotificationsDescription')}</p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" bind:checked={settings.smsNotifications} class="sr-only peer" />
@@ -302,13 +303,13 @@
         <div class="flex items-center mb-6">
           <Shield class="h-6 w-6 text-red-600 ltr:mr-3 rtl:ml-3" />
           <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-            Security Settings
+            {$_('settings.securitySettings')}
           </h2>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label for="session-timeout" class="label">Session Timeout (minutes)</label>
+            <label for="session-timeout" class="label">{$_('settings.sessionTimeout')}</label>
             <input 
               id="session-timeout"
               type="number" 
@@ -320,16 +321,16 @@
           </div>
           
           <div>
-            <label for="password-policy" class="label">Password Policy</label>
+            <label for="password-policy" class="label">{$_('settings.passwordPolicy')}</label>
             <select id="password-policy" bind:value={settings.passwordPolicy} class="input">
-              <option value="weak">Weak - 6+ characters</option>
-              <option value="medium">Medium - 8+ chars, mixed case</option>
-              <option value="strong">Strong - 12+ chars, special chars</option>
+              <option value="weak">{$_('settings.passwordPolicyWeak')}</option>
+              <option value="medium">{$_('settings.passwordPolicyMedium')}</option>
+              <option value="strong">{$_('settings.passwordPolicyStrong')}</option>
             </select>
           </div>
           
           <div>
-            <label for="login-attempts" class="label">Max Login Attempts</label>
+            <label for="login-attempts" class="label">{$_('settings.maxLoginAttempts')}</label>
             <input 
               id="login-attempts"
               type="number" 
@@ -342,8 +343,8 @@
           
           <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg dark:border-gray-700">
             <div>
-              <h3 class="font-medium text-gray-900 dark:text-white">Two-Factor Authentication</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400">Enable 2FA for extra security</p>
+              <h3 class="font-medium text-gray-900 dark:text-white">{$_('settings.twoFactorAuth')}</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400">{$_('settings.twoFactorAuthDescription')}</p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" bind:checked={settings.twoFactorAuth} class="sr-only peer" />
@@ -360,7 +361,7 @@
           class="btn-primary btn-lg"
         >
           <Save class="h-5 w-5 ltr:mr-2 rtl:ml-2" />
-          Save Settings
+          {$_('settings.saveSettings')}
         </button>
       </div>
     </div>

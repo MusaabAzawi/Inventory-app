@@ -7,7 +7,8 @@ import { z } from 'zod';
 const purchaseItemSchema = z.object({
   productId: z.string().min(1, 'Product is required'),
   quantity: z.number().int().positive('Quantity must be positive'),
-  price: z.number().positive('Price must be positive')
+  price: z.number().positive('Price must be positive'),
+  weight: z.number().optional()
 });
 
 const purchaseSchema = z.object({
@@ -110,7 +111,8 @@ export const actions: Actions = {
         items: itemsData.map((item: any) => ({
           productId: item.productId || '',
           quantity: Number(item.quantity) || 0,
-          price: Number(item.price) || 0
+          price: Number(item.price) || 0,
+          weight: Number(item.weight) || 0
         })),
         discount: Number(formData.get('discount')?.toString() || '0'),
         tax: Number(formData.get('tax')?.toString() || '0'),
@@ -168,6 +170,7 @@ export const actions: Actions = {
           price: item.price,
           total: itemTotal,
           discount: 0, // Item-level discount if needed
+          weight: item.weight || 0,
           product: product
         });
       }
@@ -209,7 +212,8 @@ export const actions: Actions = {
               quantity: item.quantity,
               price: item.price,
               total: item.total,
-              discount: item.discount
+              discount: item.discount,
+              weight: item.weight
             }
           });
 

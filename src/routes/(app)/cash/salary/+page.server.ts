@@ -14,19 +14,24 @@ const salarySchema = z.object({
   salaryType: z.enum(['MONTHLY', 'WEEKLY', 'DAILY', 'BONUS', 'OVERTIME']),
 });
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals, request }) => {
   if (!locals.user) {
     throw redirect(302, '/auth/login');
   }
 
   try {
     const currencies = ['USD', 'IQD', 'SAR', 'AED', 'EUR'];
+    
+    // Get user's preferred language for salary type labels
+    const acceptLanguage = request.headers.get('accept-language') || '';
+    const isArabic = locals.user.preferredLanguage === 'ar' || acceptLanguage.includes('ar');
+    
     const salaryTypes = [
-      { id: 'MONTHLY', label: 'Monthly Salary' },
-      { id: 'WEEKLY', label: 'Weekly Salary' },
-      { id: 'DAILY', label: 'Daily Wage' },
-      { id: 'BONUS', label: 'Bonus Payment' },
-      { id: 'OVERTIME', label: 'Overtime Payment' }
+      { id: 'MONTHLY', label: isArabic ? 'راتب شهري' : 'Monthly Salary' },
+      { id: 'WEEKLY', label: isArabic ? 'راتب أسبوعي' : 'Weekly Salary' },
+      { id: 'DAILY', label: isArabic ? 'أجر يومي' : 'Daily Wage' },
+      { id: 'BONUS', label: isArabic ? 'مكافأة' : 'Bonus Payment' },
+      { id: 'OVERTIME', label: isArabic ? 'أجر إضافي' : 'Overtime Payment' }
     ];
     
     // Get employees from the Employee model
@@ -52,7 +57,7 @@ export const load: PageServerLoad = async ({ locals }) => {
   } catch (error) {
     console.error('Error loading salary page:', error);
     return {
-      currencies: ['USD'],
+      currencies: ['USD', 'IQD'],
       defaultCurrency: 'IQD',
       salaryTypes: [
         { id: 'MONTHLY', label: 'Monthly Salary' },

@@ -101,9 +101,13 @@
         }];
       }
       
-      notifications.success('Product Added', `${$locale === 'ar' ? product.nameAr : product.nameEn} added to sale`);
+      notifications.success($_('sales.productAdded'), $_('sales.productAddedMessage', {
+        values: { product: $locale === 'ar' ? product.nameAr : product.nameEn }
+      }));
     } else {
-      notifications.error('Product Not Found', `No product found with barcode: ${barcode}`);
+      notifications.error($_('sales.productNotFound'), $_('sales.noProductWithBarcode', {
+        values: { barcode }
+      }));
     }
   }
 
@@ -112,13 +116,13 @@
       isSubmitting = false;
       
       if (result.type === 'success') {
-        notifications.success('Sale Created', 'Sale has been created successfully');
+        notifications.success($_('sales.saleCreated'), $_('sales.saleCreatedMessage'));
       } else if (result.type === 'failure') {
-        notifications.error('Sale Failed', result.data?.error || 'Failed to create sale');
+        notifications.error($_('sales.saleFailed'), result.data?.error || $_('sales.failedToCreate'));
         // Update the form to show errors
         await update();
       } else if (result.type === 'redirect') {
-        notifications.success('Sale Created', 'Sale has been created successfully');
+        notifications.success($_('sales.saleCreated'), $_('sales.saleCreatedMessage'));
         // Redirect will happen automatically
       }
     };
@@ -127,41 +131,47 @@
   function validateForm() {
     // Check if we have any items
     if (items.length === 0) {
-      notifications.error('Validation Error', 'Please add at least one item to the sale');
+      notifications.error($_('sales.validationError'), $_('sales.addAtLeastOneItem'));
       return false;
     }
     
     // Check if all items have products selected
     const itemsWithoutProducts = items.filter(item => !item.productId);
     if (itemsWithoutProducts.length > 0) {
-      notifications.error('Validation Error', 'Please select a product for all items');
+      notifications.error($_('sales.validationError'), $_('sales.selectProductForAll'));
       return false;
     }
     
     // Check if all items have valid quantities
     const itemsWithInvalidQty = items.filter(item => !item.quantity || item.quantity <= 0);
     if (itemsWithInvalidQty.length > 0) {
-      notifications.error('Validation Error', 'Please enter valid quantities for all items');
+      notifications.error($_('sales.validationError'), $_('sales.enterValidQuantities'));
       return false;
     }
     
     // Check if all items have valid prices
     const itemsWithInvalidPrice = items.filter(item => !item.price || item.price <= 0);
     if (itemsWithInvalidPrice.length > 0) {
-      notifications.error('Validation Error', 'Please enter valid prices for all items');
+      notifications.error($_('sales.validationError'), $_('sales.enterValidPrices'));
       return false;
     }
     
     // Check payment method
     if (!saleData.paymentMethod) {
-      notifications.error('Validation Error', 'Please select a payment method');
+      notifications.error($_('sales.validationError'), $_('sales.selectPaymentMethod'));
       return false;
     }
     
     // Check stock availability
     for (const item of items) {
       if (item.product && item.product.quantity < item.quantity) {
-        notifications.error('Stock Error', `Insufficient stock for ${item.product.nameEn}. Available: ${item.product.quantity}, Requested: ${item.quantity}`);
+        notifications.error($_('sales.stockError'), $_('sales.insufficientStock', { 
+          values: { 
+            product: $locale === 'ar' ? item.product.nameAr : item.product.nameEn,
+            available: item.product.quantity,
+            requested: item.quantity
+          }
+        }));
         return false;
       }
     }
@@ -186,7 +196,7 @@
         {$_('modules.sales.newSale')}
       </h1>
       <p class="text-gray-600 dark:text-gray-400 mt-1">
-        Create a new sale transaction
+        {$_('sales.newSaleSubtitle')}
       </p>
     </div>
   </div>
@@ -216,7 +226,7 @@
         <!-- Items Header -->
         <div class="flex items-center justify-between">
           <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-            Sale Items
+            {$_('sales.saleItems')}
           </h2>
           <div class="flex gap-2">
             <button
@@ -225,7 +235,7 @@
               class="btn-secondary btn-sm"
             >
               <Scan class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
-              Scan
+              {$_('sales.scanBarcode')}
             </button>
             <button
               type="button"
@@ -233,7 +243,7 @@
               class="btn-primary btn-sm"
             >
               <Plus class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
-              Add Item
+              {$_('sales.addItem')}
             </button>
           </div>
         </div>
@@ -245,7 +255,7 @@
               <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
                 <!-- Product -->
                 <div class="md:col-span-2">
-                  <label for="product-{index}" class="label">Product</label>
+                  <label for="product-{index}" class="label">{$_('sales.product')}</label>
                   <select
                     id="product-{index}"
                     bind:value={item.productId}
@@ -253,7 +263,7 @@
                     class="input text-sm"
                     required
                   >
-                    <option value="">Select product...</option>
+                    <option value="">{$_('sales.selectProduct')}</option>
                     {#each data.products as product}
                       <option value={product.id}>
                         {$locale === 'ar' ? product.nameAr : product.nameEn} - {product.sku}
@@ -265,7 +275,7 @@
 
                 <!-- Quantity -->
                 <div>
-                  <label for="quantity-{index}" class="label">Qty</label>
+                  <label for="quantity-{index}" class="label">{$_('sales.quantity')}</label>
                   <input
                     id="quantity-{index}"
                     type="number"
@@ -280,7 +290,7 @@
 
                 <!-- Price -->
                 <div>
-                  <label for="price-{index}" class="label">Price</label>
+                  <label for="price-{index}" class="label">{$_('sales.price')}</label>
                   <input
                     id="price-{index}"
                     type="number"
@@ -295,7 +305,7 @@
 
                 <!-- Total -->
                 <div>
-                  <label class="label">Total</label>
+                  <label class="label">{$_('sales.total')}</label>
                   <div class="input bg-gray-50 dark:bg-gray-700">
                     ${item.total.toFixed(2)}
                   </div>
@@ -318,8 +328,8 @@
               {#if item.product}
                 <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                   <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                    <span>Available: {item.product.quantity}</span>
-                    <span>Category: {item.product.category ? ($locale === 'ar' ? item.product.category.nameAr : item.product.category.nameEn) : 'None'}</span>
+                    <span>{$_('sales.available')}: {item.product.quantity}</span>
+                    <span>{$_('sales.category')}: {item.product.category ? ($locale === 'ar' ? item.product.category.nameAr : item.product.category.nameEn) : $_('sales.none')}</span>
                   </div>
                 </div>
               {/if}
@@ -334,18 +344,18 @@
         <div class="card p-4">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
             <User class="h-5 w-5 ltr:mr-2 rtl:ml-2" />
-            Customer
+            {$_('sales.customer')}
           </h3>
           
           <div class="space-y-4">
             <div>
-              <label for="customer" class="label">Select Customer</label>
+              <label for="customer" class="label">{$_('sales.selectCustomer')}</label>
               <select
                 id="customer"
                 bind:value={saleData.customerId}
                 class="input"
               >
-                <option value="">Walk-in Customer</option>
+                <option value="">{$_('sales.walkInCustomer')}</option>
                 {#each data.customers as customer}
                   <option value={customer.id}>
                     {$locale === 'ar' ? customer.nameAr : customer.nameEn}
@@ -361,19 +371,19 @@
         <div class="card p-4">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
             <Calculator class="h-5 w-5 ltr:mr-2 rtl:ml-2" />
-            Payment Details
+            {$_('sales.paymentDetails')}
           </h3>
           
           <div class="space-y-4">
             <!-- Subtotal -->
             <div class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-400">Subtotal:</span>
+              <span class="text-gray-600 dark:text-gray-400">{$_('sales.subtotal')}:</span>
               <span class="font-semibold">${subtotal.toFixed(2)}</span>
             </div>
 
             <!-- Discount -->
             <div>
-              <label for="discount" class="label">Discount</label>
+              <label for="discount" class="label">{$_('sales.discount')}</label>
               <input
                 id="discount"
                 type="number"
@@ -387,7 +397,7 @@
 
             <!-- Tax -->
             <div>
-              <label for="tax" class="label">Tax</label>
+              <label for="tax" class="label">{$_('sales.tax')}</label>
               <input
                 id="tax"
                 type="number"
@@ -400,13 +410,13 @@
 
             <!-- Net Amount -->
             <div class="flex justify-between text-lg font-semibold border-t pt-4">
-              <span>Total:</span>
+              <span>{$_('sales.netAmount')}:</span>
               <span class="text-green-600">${netAmount.toFixed(2)}</span>
             </div>
 
             <!-- Payment Method -->
             <div>
-              <label for="payment-method" class="label">Payment Method</label>
+              <label for="payment-method" class="label">{$_('sales.paymentMethod')}</label>
               <select
                 id="payment-method"
                 bind:value={saleData.paymentMethod}
@@ -444,7 +454,7 @@
           {:else}
             <ShoppingCart class="h-5 w-5 ltr:mr-2 rtl:ml-2" />
           {/if}
-          {isSubmitting ? 'Creating Sale...' : 'Create Sale'}
+          {isSubmitting ? $_('sales.creatingSale') : $_('sales.createSale')}
         </button>
       </div>
     </div>

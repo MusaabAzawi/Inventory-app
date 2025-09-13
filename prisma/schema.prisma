@@ -158,6 +158,7 @@ model PurchaseItem {
   price      Float
   total      Float
   discount   Float    @default(0)
+  weight     Float?   // Weight in kilograms for food items
   
   // Relations
   purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)

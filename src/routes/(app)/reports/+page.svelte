@@ -121,7 +121,7 @@
     </div>
     
     <p id="generate-report-description" class="sr-only">
-      Generate a report based on the selected type and date range
+      {$_('reports.generateReportDescription')}
     </p>
   </div>
 
@@ -132,16 +132,16 @@
       <!-- Sales Summary -->
       <div class="bg-white rounded-lg shadow p-6 dark:bg-gray-800">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Sales Summary</h3>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{$_('reports.salesSummary')}</h3>
           <ShoppingCart class="h-5 w-5 text-gray-400" aria-hidden="true" />
         </div>
         <div class="space-y-2">
           <div class="flex justify-between">
-            <span class="text-gray-600 dark:text-gray-400">Total Sales:</span>
+            <span class="text-gray-600 dark:text-gray-400">{$_('reports.totalSales')}:</span>
             <span class="font-semibold">{data.data?.sales?._count || 0}</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-gray-600 dark:text-gray-400">Revenue:</span>
+            <span class="text-gray-600 dark:text-gray-400">{$_('reports.revenue')}:</span>
             <span class="font-semibold">{formatCurrency(data.data?.sales?._sum?.netAmount || 0)}</span>
           </div>
         </div>
@@ -150,16 +150,16 @@
       <!-- Inventory Summary -->
       <div class="bg-white rounded-lg shadow p-6 dark:bg-gray-800">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Inventory Summary</h3>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{$_('reports.inventorySummary')}</h3>
           <Package class="h-5 w-5 text-gray-400" aria-hidden="true" />
         </div>
         <div class="space-y-2">
           <div class="flex justify-between">
-            <span class="text-gray-600 dark:text-gray-400">Total Products:</span>
+            <span class="text-gray-600 dark:text-gray-400">{$_('reports.totalProducts')}:</span>
             <span class="font-semibold">{data.data?.inventory?._count || 0}</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-gray-600 dark:text-gray-400">Total Stock:</span>
+            <span class="text-gray-600 dark:text-gray-400">{$_('reports.totalStock')}:</span>
             <span class="font-semibold">{data.data?.inventory?._sum?.quantity || 0}</span>
           </div>
         </div>
@@ -168,12 +168,12 @@
       <!-- Performance -->
       <div class="bg-white rounded-lg shadow p-6 dark:bg-gray-800">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Performance</h3>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{$_('reports.performance')}</h3>
           <TrendingUp class="h-5 w-5 text-gray-400" aria-hidden="true" />
         </div>
         <div class="space-y-2">
           <div class="flex justify-between">
-            <span class="text-gray-600 dark:text-gray-400">Avg. Sale Value:</span>
+            <span class="text-gray-600 dark:text-gray-400">{$_('reports.avgSaleValue')}:</span>
             <span class="font-semibold">
               {formatCurrency((data.data?.sales?._sum?.netAmount || 0) / Math.max(data.data?.sales?._count || 1, 1))}
             </span>
@@ -185,14 +185,14 @@
     <!-- Top Products -->
     {#if data.data?.topProducts?.length}
       <div class="bg-white rounded-lg shadow p-6 dark:bg-gray-800">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Selling Products</h3>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{$_('reports.topSellingProducts')}</h3>
         <div class="overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700" role="table">
             <thead>
               <tr>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Product</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Quantity Sold</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Revenue</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">{$_('reports.product')}</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">{$_('reports.quantitySold')}</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">{$_('reports.revenue')}</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -224,7 +224,7 @@
     <!-- Sales Report -->
     <div class="bg-white rounded-lg shadow dark:bg-gray-800">
       <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Sales Report</h3>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{$_('reports.salesReport')}</h3>
       </div>
       
       {#if data.data?.sales?.length}
@@ -232,11 +232,11 @@
           <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700" role="table">
             <thead class="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Invoice</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Customer</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Date</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Amount</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Staff</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">{$_('reports.invoice')}</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">{$_('reports.customer')}</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">{$_('common.date')}</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">{$_('sales.amount')}</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">{$_('reports.staff')}</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
@@ -249,7 +249,7 @@
                     {#if sale.customer}
                       {$locale === 'ar' ? sale.customer.nameAr : sale.customer.nameEn}
                     {:else}
-                      Walk-in Customer
+                      {$_('reports.walkInCustomer')}
                     {/if}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
@@ -268,7 +268,7 @@
         </div>
       {:else}
         <div class="p-6 text-center text-gray-500 dark:text-gray-400">
-          No sales data found for the selected period.
+          {$_('reports.noSalesDataFound')}
         </div>
       {/if}
     </div>
@@ -277,7 +277,7 @@
     <!-- Employee Report -->
     <div class="bg-white rounded-lg shadow dark:bg-gray-800">
       <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Employee Report</h3>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{$_('reports.employeeReport')}</h3>
       </div>
       
       {#if data.data?.employees?.length}
@@ -285,13 +285,13 @@
           <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700" role="table">
             <thead class="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Name</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Position</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Email</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Phone</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Salary</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Status</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">Hire Date</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">{$_('reports.name')}</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">{$_('reports.position')}</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">{$_('auth.email')}</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">{$_('reports.phone')}</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">{$_('reports.salary')}</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">{$_('common.status')}</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">{$_('reports.hireDate')}</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
@@ -342,15 +342,15 @@
         <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div>
-              <span class="text-gray-600 dark:text-gray-300">Total Employees:</span>
+              <span class="text-gray-600 dark:text-gray-300">{$_('reports.totalEmployees')}:</span>
               <span class="font-semibold text-gray-900 dark:text-white ml-2">{data.data.employees.length}</span>
             </div>
             <div>
-              <span class="text-gray-600 dark:text-gray-300">Active Employees:</span>
+              <span class="text-gray-600 dark:text-gray-300">{$_('reports.activeEmployees')}:</span>
               <span class="font-semibold text-green-600 dark:text-green-400 ml-2">{data.data.employees.filter(e => e.isActive).length}</span>
             </div>
             <div>
-              <span class="text-gray-600 dark:text-gray-300">Total Monthly Payroll:</span>
+              <span class="text-gray-600 dark:text-gray-300">{$_('reports.totalMonthlyPayroll')}:</span>
               <span class="font-semibold text-gray-900 dark:text-white ml-2">
                 {new Intl.NumberFormat('ar-IQ', {
                   style: 'decimal',
@@ -363,7 +363,7 @@
         </div>
       {:else}
         <div class="p-6 text-center text-gray-500 dark:text-gray-400">
-          No employee data found.
+          {$_('reports.noEmployeeDataFound')}
         </div>
       {/if}
     </div>
@@ -371,8 +371,8 @@
   {:else}
     <div class="bg-white rounded-lg shadow p-6 dark:bg-gray-800 text-center">
       <FileText class="mx-auto h-12 w-12 text-gray-300 mb-4" aria-hidden="true" />
-      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Report Not Available</h3>
-      <p class="text-gray-500 dark:text-gray-400">This report type is not yet implemented.</p>
+      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">{$_('reports.reportNotAvailable')}</h3>
+      <p class="text-gray-500 dark:text-gray-400">{$_('reports.reportNotImplemented')}</p>
     </div>
   {/if}
 </div>

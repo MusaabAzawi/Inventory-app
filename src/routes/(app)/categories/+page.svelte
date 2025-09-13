@@ -9,10 +9,10 @@
   export let data: PageData;
 
   const columns = [
-    { key: 'nameEn', label: 'product.nameEnglish', sortable: true },
-    { key: 'nameAr', label: 'product.nameArabic', sortable: true },
-    { key: 'descriptionEn', label: 'English Description', sortable: false },
-    { key: '_count.products', label: 'Products Count', sortable: true },
+    { key: 'nameEn', label: 'categories.nameEnglish', sortable: true },
+    { key: 'nameAr', label: 'categories.nameArabic', sortable: true },
+    { key: 'descriptionEn', label: 'categories.descriptionEnglish', sortable: false },
+    { key: '_count.products', label: 'categories.productsCount', sortable: true },
     { key: 'createdAt', label: 'common.date', sortable: true }
   ];
 
@@ -22,11 +22,11 @@
 
   function confirmDelete(category: any) {
     if (category._count.products > 0) {
-      alert('Cannot delete category with products');
+      alert($_('categories.cannotDeleteWithProducts'));
       return;
     }
     
-    if (confirm(`Delete category "${$locale === 'ar' ? category.nameAr : category.nameEn}"?`)) {
+    if (confirm($_('categories.confirmDelete') + ` "${$locale === 'ar' ? category.nameAr : category.nameEn}"?`)) {
       const form = document.createElement('form');
       form.method = 'POST';
       form.action = '?/delete';
@@ -46,12 +46,17 @@
 <div class="space-y-6">
   <!-- Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-    <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
-      Categories
-    </h1>
+    <div>
+      <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
+        {$_('categories.title')}
+      </h1>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+        {$_('categories.subtitle')}
+      </p>
+    </div>
     <a href="/categories/new" class="btn-primary btn-md">
       <Plus class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
-      Add Category
+      {$_('categories.addCategory')}
     </a>
   </div>
 

@@ -31,10 +31,10 @@
     </a>
     <div>
       <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
-        Edit Category
+        {$_('categories.editCategory')}
       </h1>
       <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-        Update category information
+        {$_('categories.updateCategoryInfo')}
       </p>
     </div>
   </div>
@@ -48,7 +48,7 @@
           {data.category.nameEn} / {data.category.nameAr}
         </p>
         <p class="text-sm text-blue-700 dark:text-blue-300">
-          {data.category._count.products} product{data.category._count.products !== 1 ? 's' : ''} in this category
+          {data.category._count.products} {$_('categories.productsInCategory')}
         </p>
       </div>
     </div>
@@ -72,7 +72,7 @@
         <!-- English Name -->
         <div>
           <label for="nameEn" class="label">
-            English Name <span class="text-red-500">*</span>
+            {$_('categories.nameEnglish')} <span class="text-red-500">*</span>
           </label>
           <input
             id="nameEn"
@@ -89,7 +89,7 @@
         <!-- Arabic Name -->
         <div>
           <label for="nameAr" class="label">
-            Arabic Name <span class="text-red-500">*</span>
+            {$_('categories.nameArabic')} <span class="text-red-500">*</span>
           </label>
           <input
             id="nameAr"
@@ -99,13 +99,13 @@
             class="input"
             value={form?.nameAr ?? data.category.nameAr}
             dir="rtl"
-            placeholder="أدخل اسم التصنيف بالعربية"
+            placeholder={$_('categories.enterNameArabic')}
           />
         </div>
 
         <!-- English Description -->
         <div>
-          <label for="descriptionEn" class="label">English Description</label>
+          <label for="descriptionEn" class="label">{$_('categories.descriptionEnglish')}</label>
           <textarea
             id="descriptionEn"
             name="descriptionEn"
@@ -119,7 +119,7 @@
 
         <!-- Arabic Description -->
         <div>
-          <label for="descriptionAr" class="label">Arabic Description</label>
+          <label for="descriptionAr" class="label">{$_('categories.descriptionArabic')}</label>
           <textarea
             id="descriptionAr"
             name="descriptionAr"
@@ -127,7 +127,7 @@
             class="input"
             value={form?.descriptionAr ?? data.category.descriptionAr ?? ''}
             dir="rtl"
-            placeholder="وصف اختياري بالعربية"
+            placeholder={$_('categories.enterDescriptionArabic')}
           ></textarea>
         </div>
       </div>

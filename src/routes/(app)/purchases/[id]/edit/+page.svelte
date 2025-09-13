@@ -1,4 +1,4 @@
-<!-- src/routes/(app)/purchases/new/+page.svelte -->
+<!-- src/routes/(app)/purchases/[id]/edit/+page.svelte -->
 <script lang="ts">
   import { _ } from 'svelte-i18n';
   import { locale } from 'svelte-i18n';
@@ -15,7 +15,8 @@
     Calendar,
     DollarSign,
     Info,
-    Package
+    Package,
+    Save
   } from 'lucide-svelte';
   import BarcodeScanner from '$lib/components/barcode/BarcodeScanner.svelte';
   import type { PageData, ActionData } from './$types';
@@ -28,11 +29,11 @@
   
   // Purchase data
   let purchaseData = {
-    supplierId: '',
-    discount: 0,
-    tax: 0,
-    purchaseDate: new Date().toISOString().split('T')[0],
-    notes: ''
+    supplierId: data.purchase.supplierId || '',
+    discount: data.purchase.discount || 0,
+    tax: data.purchase.tax || 0,
+    purchaseDate: data.purchase.purchaseDate.split('T')[0],
+    notes: data.purchase.notes || ''
   };
   
   // Purchase items
@@ -44,7 +45,15 @@
     weight?: number;
     product?: any;
     lastPurchasePrice?: number;
-  }> = [];
+  }> = data.purchase.items.map(item => ({
+    productId: item.product.id,
+    quantity: item.quantity,
+    price: item.price,
+    total: item.total,
+    weight: item.weight || 0,
+    product: item.product,
+    lastPurchasePrice: item.product.lastPurchase?.price
+  }));
 
   // Computed values
   $: subtotal = items.reduce((sum, item) => sum + item.total, 0);
@@ -136,13 +145,13 @@
       isSubmitting = false;
       
       if (result.type === 'success') {
-        notifications.success($_('purchases.purchaseCreated'), $_('purchases.purchaseCreatedMessage'));
+        notifications.success($_('purchases.purchaseUpdated'), $_('purchases.purchaseUpdatedMessage'));
       } else if (result.type === 'failure') {
-        notifications.error($_('purchases.purchaseFailed'), result.data?.error || $_('purchases.failedToCreate'));
+        notifications.error($_('purchases.purchaseFailed'), result.data?.error || $_('purchases.failedToUpdate'));
         // Update the form to show errors
         await update();
       } else if (result.type === 'redirect') {
-        notifications.success($_('purchases.purchaseCreated'), $_('purchases.purchaseCreatedMessage'));
+        notifications.success($_('purchases.purchaseUpdated'), $_('purchases.purchaseUpdatedMessage'));
         // Redirect will happen automatically
       }
     };
@@ -188,41 +197,20 @@
     
     return true;
   }
-
-  function formatDate(date: string) {
-    return new Date(date).toLocaleDateString($locale === 'ar' ? 'ar-SA' : 'en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  }
-
-  function formatCurrency(amount: number) {
-    return new Intl.NumberFormat($locale === 'ar' ? 'ar-SA' : 'en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2
-    }).format(amount);
-  }
-
-  // Initialize with one empty item
-  if (items.length === 0) {
-    addItem();
-  }
 </script>
 
 <div class="space-y-6">
   <!-- Header -->
   <div class="flex items-center gap-4">
-    <a href="/purchases" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+    <a href="/purchases/{data.purchase.id}" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
       <ArrowLeft class="w-6 h-6" />
     </a>
     <div>
       <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
-        {$_('modules.purchases.newPurchase')}
+        {$_('purchases.editPurchase')} #{data.purchase.invoiceNumber}
       </h1>
       <p class="text-gray-600 dark:text-gray-400 mt-1">
-        {$_('purchases.newPurchaseSubtitle')}
+        {$_('purchases.editPurchaseSubtitle')}
       </p>
     </div>
   </div>
@@ -261,7 +249,7 @@
               class="btn-secondary btn-sm"
             >
               <Scan class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
-{$_('inventory.scan')}
+              {$_('forms.scanProductBarcode')}
             </button>
             <button
               type="button"
@@ -269,7 +257,7 @@
               class="btn-primary btn-sm"
             >
               <Plus class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
-{$_('purchases.addItem')}
+              {$_('purchases.addItem')}
             </button>
           </div>
         </div>
@@ -293,7 +281,7 @@
                     {#each data.products as product}
                       <option value={product.id}>
                         {$locale === 'ar' ? product.nameAr : product.nameEn} - {product.sku}
-                        ({$_('purchases.stock')}: {product.quantity})
+                        ({product.quantity} {$_('purchases.stock')})
                       </option>
                     {/each}
                   </select>
@@ -345,6 +333,11 @@
                     class="input"
                     required
                   />
+                  {#if item.lastPurchasePrice}
+                    <p class="text-xs text-gray-500 mt-1">
+                      {$_('purchases.lastPrice')}: ${item.lastPurchasePrice.toFixed(2)}
+                    </p>
+                  {/if}
                 </div>
 
                 <!-- Total -->
@@ -368,42 +361,14 @@
                 </div>
               </div>
 
-              <!-- Product Info & Last Purchase Details -->
+              <!-- Product Info -->
               {#if item.product}
                 <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <span class="text-gray-500 dark:text-gray-400">{$_('purchases.currentStock')}</span>
-                      <span class="font-medium ltr:ml-2 rtl:mr-2">{item.product.quantity}</span>
-                    </div>
-                    <div>
-                      <span class="text-gray-500 dark:text-gray-400">{$_('purchases.category')}</span>
-                      <span class="font-medium ltr:ml-2 rtl:mr-2">
-                        {item.product.category ? ($locale === 'ar' ? item.product.category.nameAr : item.product.category.nameEn) : $_('purchases.none')}
-                      </span>
-                    </div>
-                    <div>
-                      <span class="text-gray-500 dark:text-gray-400">{$_('purchases.currentSellingPrice')}</span>
-                      <span class="font-medium ltr:ml-2 rtl:mr-2">{formatCurrency(item.product.sellingPrice)}</span>
-                    </div>
+                  <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                    <span>{$_('purchases.currentStock')}: {item.product.quantity}</span>
+                    <span>{$_('purchases.category')}: {item.product.category ? ($locale === 'ar' ? item.product.category.nameAr : item.product.category.nameEn) : $_('purchases.none')}</span>
+                    <span>{$_('purchases.currentSellingPrice')}: ${item.product.sellingPrice.toFixed(2)}</span>
                   </div>
-                  
-                  {#if item.product.lastPurchase}
-                    <div class="mt-2 p-2 bg-blue-50 rounded-lg dark:bg-blue-900">
-                      <div class="flex items-start gap-2">
-                        <Info class="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />
-                        <div class="text-sm">
-                          <p class="font-medium text-blue-900 dark:text-blue-100">
-                            {$_('modules.purchases.lastPrice')}: {formatCurrency(item.product.lastPurchase.price)}
-                          </p>
-                          <p class="text-blue-700 dark:text-blue-300">
-                            {$_('purchases.date')} {formatDate(item.product.lastPurchase.date)} | 
-                            {$_('purchases.supplier')}: {$locale === 'ar' ? item.product.lastPurchase.supplier?.nameAr : item.product.lastPurchase.supplier?.nameEn}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  {/if}
                 </div>
               {/if}
             </div>
@@ -417,7 +382,7 @@
         <div class="card p-4">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
             <Truck class="h-5 w-5 ltr:mr-2 rtl:ml-2" />
-            {$_('modules.purchases.supplier')}
+            {$_('purchases.supplier')}
           </h3>
           
           <div class="space-y-4">
@@ -440,12 +405,9 @@
 
             <!-- Purchase Date -->
             <div>
-              <label for="purchase-date" class="label flex items-center">
-                <Calendar class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
-                {$_('modules.purchases.purchaseDate')}
-              </label>
+              <label for="purchaseDate" class="label">{$_('purchases.date')}</label>
               <input
-                id="purchase-date"
+                id="purchaseDate"
                 type="date"
                 bind:value={purchaseData.purchaseDate}
                 class="input"
@@ -455,11 +417,11 @@
           </div>
         </div>
 
-        <!-- Cost Calculation -->
+        <!-- Cost Details -->
         <div class="card p-4">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
             <Calculator class="h-5 w-5 ltr:mr-2 rtl:ml-2" />
-{$_('purchases.costDetails')}
+            {$_('purchases.costDetails')}
           </h3>
           
           <div class="space-y-4">
@@ -496,10 +458,10 @@
               />
             </div>
 
-            <!-- Net Amount -->
+            <!-- Total Cost -->
             <div class="flex justify-between text-lg font-semibold border-t pt-4">
               <span>{$_('purchases.totalCost')}</span>
-              <span class="text-blue-600">${netAmount.toFixed(2)}</span>
+              <span class="text-green-600">${netAmount.toFixed(2)}</span>
             </div>
 
             <!-- Notes -->
@@ -516,27 +478,6 @@
           </div>
         </div>
 
-        <!-- Stock Impact Summary -->
-        <div class="card p-4 bg-green-50 dark:bg-green-900">
-          <h3 class="text-lg font-semibold text-green-900 dark:text-green-100 mb-2 flex items-center">
-            <Package class="h-5 w-5 ltr:mr-2 rtl:ml-2" />
-{$_('purchases.stockImpact')}
-          </h3>
-          <div class="space-y-2 text-sm">
-            {#each items.filter(item => item.product) as item}
-              <div class="flex justify-between text-green-700 dark:text-green-200">
-                <span>{$locale === 'ar' ? item.product.nameAr : item.product.nameEn}:</span>
-                <span class="font-medium">
-                  {item.product.quantity} → {item.product.quantity + item.quantity} (+{item.quantity})
-                </span>
-              </div>
-            {/each}
-            {#if items.filter(item => item.product).length === 0}
-              <p class="text-green-600 dark:text-green-300">{$_('purchases.selectProductsForStock')}</p>
-            {/if}
-          </div>
-        </div>
-
         <!-- Submit Button -->
         <button
           type="submit"
@@ -546,9 +487,9 @@
           {#if isSubmitting}
             <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-current ltr:mr-2 rtl:ml-2"></div>
           {:else}
-            <ShoppingBag class="h-5 w-5 ltr:mr-2 rtl:ml-2" />
+            <Save class="h-5 w-5 ltr:mr-2 rtl:ml-2" />
           {/if}
-          {isSubmitting ? $_('purchases.creatingPurchase') : $_('purchases.createPurchaseOrder')}
+          {isSubmitting ? $_('purchases.updatingPurchase') : $_('purchases.updatePurchase')}
         </button>
       </div>
     </div>
@@ -576,10 +517,3 @@
     title={$_('forms.scanProductBarcode')}
   />
 {/if}
-
-<style>
-  /* Add this if you need to import the Package icon */
-  :global(.dark) input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(1);
-  }
-</style>
