@@ -202,6 +202,7 @@
   },
   "dashboard": {
     "welcome": "مرحباً بك، {name}! إليك ما يحدث مع مخزونك.",
+    "currency": "العملة الحالية: {currency}",
     "stats": {
       "totalProducts": "إجمالي المنتجات",
       "todaysSales": "مبيعات اليوم",
@@ -564,7 +565,9 @@
     "exchangeRate": "سعر الصرف",
     "converted": "محول",
     "original": "أصلي",
-    "currencyCode": "رمز العملة"
+    "currencyCode": "رمز العملة",
+    "selectCurrency": "اختر العملة",
+    "exchangeRateNote": "أسعار الصرف تقريبية"
   },
   "forms": {
     "scanProductBarcode": "مسح الرمز الشريطي للمنتج"

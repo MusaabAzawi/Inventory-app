@@ -3,16 +3,17 @@
   import { _ } from 'svelte-i18n';
   import { locale } from 'svelte-i18n';
   import { page } from '$app/stores';
-  import { 
-    FileText, 
-    Download, 
-    Calendar, 
-    TrendingUp, 
-    Package, 
+  import {
+    FileText,
+    Download,
+    Calendar,
+    TrendingUp,
+    Package,
     ShoppingCart,
     Filter,
     UserCheck
   } from 'lucide-svelte';
+  import { displayAmount } from '$lib/utils/currencyHelper';
   import type { PageData } from './$types';
   
   export let data: PageData;
@@ -43,12 +44,6 @@
     alert($_('reports.exportFunctionality'));
   }
 
-  function formatCurrency(amount: number) {
-    return new Intl.NumberFormat($locale === 'ar' ? 'ar-SA' : 'en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  }
 
   function formatDate(date: string) {
     return new Date(date).toLocaleDateString($locale === 'ar' ? 'ar-SA' : 'en-US');
@@ -142,7 +137,7 @@
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600 dark:text-gray-400">{$_('reports.revenue')}:</span>
-            <span class="font-semibold">{formatCurrency(data.data?.sales?._sum?.netAmount || 0)}</span>
+            <span class="font-semibold">{displayAmount(data.data?.sales?._sum?.netAmount || 0)}</span>
           </div>
         </div>
       </div>
@@ -175,7 +170,7 @@
           <div class="flex justify-between">
             <span class="text-gray-600 dark:text-gray-400">{$_('reports.avgSaleValue')}:</span>
             <span class="font-semibold">
-              {formatCurrency((data.data?.sales?._sum?.netAmount || 0) / Math.max(data.data?.sales?._count || 1, 1))}
+              {displayAmount((data.data?.sales?._sum?.netAmount || 0) / Math.max(data.data?.sales?._count || 1, 1))}
             </span>
           </div>
         </div>
@@ -210,7 +205,7 @@
                     {item._sum?.quantity || 0}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">
-                    {formatCurrency(item._sum?.total || 0)}
+                    {displayAmount(item._sum?.total || 0)}
                   </td>
                 </tr>
               {/each}
@@ -256,7 +251,7 @@
                     {formatDate(sale.createdAt)}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                    {formatCurrency(sale.netAmount)}
+                    {displayAmount(sale.netAmount)}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {sale.user.name}

@@ -29,7 +29,7 @@ export function getCurrencyByCode(code: string): Currency | undefined {
   return SUPPORTED_CURRENCIES.find(currency => currency.code === code);
 }
 
-export function formatCurrency(amount: number, currencyCode: string = 'USD', locale: string = 'en'): string {
+export function formatCurrency(amount: number, currencyCode: string = 'IQD', locale: string = 'en'): string {
   const currency = getCurrencyByCode(currencyCode);
   if (!currency) {
     throw new Error(`Unsupported currency code: ${currencyCode}`);
@@ -52,7 +52,7 @@ export function formatCurrency(amount: number, currencyCode: string = 'USD', loc
     maximumFractionDigits: currencyCode === 'IQD' ? 0 : 2
   }).format(amount);
 
-  return locale === 'ar' 
+  return locale === 'ar'
     ? `${formatted} ${currency.symbol}`
     : `${currency.symbol}${formatted}`;
 }
@@ -72,4 +72,26 @@ export function convertCurrency(amount: number, fromCurrency: string, toCurrency
 
 export function getDefaultCurrency(): string {
   return 'IQD'; // Changed default to Iraqi Dinar as requested
+}
+
+export function convertAmountToCurrentCurrency(
+  amount: number,
+  fromCurrency: string,
+  toCurrency: string
+): number {
+  if (fromCurrency === toCurrency) {
+    return amount;
+  }
+
+  return convertCurrency(amount, fromCurrency, toCurrency);
+}
+
+export function formatCurrencyWithConversion(
+  amount: number,
+  storeCurrency: string = 'USD',
+  displayCurrency: string = 'IQD',
+  locale: string = 'en'
+): string {
+  const convertedAmount = convertAmountToCurrentCurrency(amount, storeCurrency, displayCurrency);
+  return formatCurrency(convertedAmount, displayCurrency, locale);
 }

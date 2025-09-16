@@ -6,6 +6,7 @@
   import DataTable from '$lib/components/ui/DataTable.svelte';
   import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
   import { notifications } from '$lib/stores/notifications';
+  import { displayAmount } from '$lib/utils/currencyHelper';
   
   export let products: any[] = [];
   export let searchQuery = '';
@@ -27,12 +28,20 @@
     return matchesSearch && matchesCategory;
   });
 
-  const columns = [
+  // Check if any products have food category to determine if expiry column should be shown
+  $: showExpiryColumn = filteredProducts.some(product =>
+    product.category &&
+    (product.category.nameEn.toLowerCase().includes('food') ||
+     product.category.nameAr.includes('طعام'))
+  );
+
+  $: columns = [
     { key: 'sku', label: 'product.sku', sortable: true },
     { key: 'nameEn', label: 'product.name', sortable: true },
     { key: 'category.nameEn', label: 'product.category', sortable: true },
     { key: 'quantity', label: 'product.quantity', sortable: true },
     { key: 'sellingPrice', label: 'product.price', sortable: true },
+    ...(showExpiryColumn ? [{ key: 'expiryDate', label: 'product.expiryDate', sortable: true }] : []),
     { key: 'status', label: 'common.status', sortable: false }
   ];
   
@@ -92,14 +101,6 @@
     }
   }
 
-  function formatPrice(price: number) {
-    const formatted = new Intl.NumberFormat('ar-IQ', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(price);
-    return `${formatted} د.ع`;
-  }
 </script>
 
 <DataTable data={filteredProducts} {columns} searchable={false}>
@@ -152,13 +153,36 @@
     <!-- Price Column -->
     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
       <div>
-        <p class="font-medium">{formatPrice(item.sellingPrice)}</p>
+        <p class="font-medium">{displayAmount(item.sellingPrice)}</p>
         <p class="text-xs text-gray-500 dark:text-gray-400">
-          Cost: {formatPrice(item.costPrice)}
+          Cost: {displayAmount(item.costPrice)}
         </p>
       </div>
     </td>
-    
+
+    <!-- Expiry Date Column (conditionally shown for food items) -->
+    {#if showExpiryColumn}
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+        {#if item.expiryDate}
+          {@const expiryDate = new Date(item.expiryDate)}
+          {@const isExpired = expiryDate < new Date()}
+          {@const isExpiringSoon = expiryDate < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) && !isExpired}
+          <div class="flex items-center">
+            <span class:text-red-600={isExpired} class:text-yellow-600={isExpiringSoon}>
+              {expiryDate.toLocaleDateString($locale === 'ar' ? 'ar-SA' : 'en-US')}
+            </span>
+            {#if isExpired}
+              <AlertTriangle class="h-4 w-4 text-red-500 ltr:ml-2 rtl:mr-2" title="Expired" />
+            {:else if isExpiringSoon}
+              <AlertTriangle class="h-4 w-4 text-yellow-500 ltr:ml-2 rtl:mr-2" title="Expiring soon" />
+            {/if}
+          </div>
+        {:else}
+          <span class="text-gray-400 italic">-</span>
+        {/if}
+      </td>
+    {/if}
+
     <!-- Status Column -->
     <td class="px-6 py-4 whitespace-nowrap">
       <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {status.class}">

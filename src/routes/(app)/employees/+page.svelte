@@ -5,6 +5,7 @@
 	import DataTable from '$lib/components/ui/DataTable.svelte';
 	import Modal from '$lib/components/ui/Modal.svelte';
 	import { notifications } from '$lib/stores/notifications.js';
+	import { displayAmount } from '$lib/utils/currencyHelper';
 
 	interface Employee {
 		id: string;
@@ -142,13 +143,6 @@
 		}
 	}
 
-	function formatCurrency(amount: number) {
-		return new Intl.NumberFormat('ar-IQ', {
-			style: 'decimal',
-			minimumFractionDigits: 0,
-			maximumFractionDigits: 0
-		}).format(amount) + ' د.ع';
-	}
 </script>
 
 <svelte:head>
@@ -232,7 +226,7 @@
 						Total Payroll
 					</p>
 					<p class="text-2xl font-bold text-gray-900 dark:text-white">
-						{formatCurrency(employees.filter(e => e.isActive && e.salary).reduce((sum, e) => sum + (e.salary || 0), 0))}
+						{displayAmount(employees.filter(e => e.isActive && e.salary).reduce((sum, e) => sum + (e.salary || 0), 0))}
 					</p>
 				</div>
 			</div>
@@ -250,7 +244,7 @@
 				{#each columns as column}
 					<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
 						{#if column.key === 'salary'}
-							{item.salary ? formatCurrency(item.salary) : '-'}
+							{item.salary ? displayAmount(item.salary) : '-'}
 						{:else if column.key === 'isActive'}
 							<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {item.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
 								{item.isActive ? $_('employees.active') : $_('employees.inactive')}

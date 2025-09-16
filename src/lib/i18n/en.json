@@ -202,6 +202,7 @@
   },
   "dashboard": {
     "welcome": "Welcome back, {name}! Here's what's happening with your inventory.",
+    "currency": "Current Currency: {currency}",
     "stats": {
       "totalProducts": "Total Products",
       "todaysSales": "Today's Sales",
@@ -564,7 +565,9 @@
     "exchangeRate": "Exchange Rate",
     "converted": "Converted",
     "original": "Original",
-    "currencyCode": "Currency Code"
+    "currencyCode": "Currency Code",
+    "selectCurrency": "Select Currency",
+    "exchangeRateNote": "Exchange rates are approximate"
   },
   "forms": {
     "scanProductBarcode": "Scan Product Barcode"

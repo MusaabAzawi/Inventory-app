@@ -5,6 +5,7 @@
   import { notifications } from '$lib/stores/notifications';
   import { ArrowLeft, Save, Scan, Barcode } from 'lucide-svelte';
   import BarcodeScanner from '$lib/components/barcode/BarcodeScanner.svelte';
+  import { currentCurrency } from '$lib/stores/currency';
   
   export let product: any = null;
   export let categories: any[] = [];
@@ -331,7 +332,7 @@
         {$_('product.costPrice')} <span class="text-red-500">*</span>
       </label>
       <div class="relative">
-        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">د.ع</span>
+        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">{$currentCurrency.symbol}</span>
         <input
           id="costPrice"
           name="costPrice"
@@ -351,7 +352,7 @@
         {$_('product.sellingPrice')} <span class="text-red-500">*</span>
       </label>
       <div class="relative">
-        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">د.ع</span>
+        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">{$currentCurrency.symbol}</span>
         <input
           id="sellingPrice"
           name="sellingPrice"

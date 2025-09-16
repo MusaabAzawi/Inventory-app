@@ -2,11 +2,11 @@
   import { _ } from 'svelte-i18n';
   import { locale } from 'svelte-i18n';
   import { onMount } from 'svelte';
-  import { 
-    ShoppingCart, 
-    Package, 
-    DollarSign, 
-    TrendingUp, 
+  import {
+    ShoppingCart,
+    Package,
+    DollarSign,
+    TrendingUp,
     TrendingDown,
     AlertTriangle,
     Eye,
@@ -14,6 +14,9 @@
     BarChart3
   } from 'lucide-svelte';
   import type { PageData } from './$types';
+  import { currencyStore, currentCurrency } from '$lib/stores/currency';
+  import { formatCurrency, formatCurrencyWithConversion } from '$lib/utils/currency';
+  import CurrencySwitcher from '$lib/components/layout/CurrencySwitcher.svelte';
   
   export let data: PageData;
   
@@ -152,13 +155,16 @@
     }
   }
 
-  function formatCurrency(amount: number) {
-    const formatted = new Intl.NumberFormat('ar-IQ', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-    return `${formatted} د.ع`;
+  function formatCurrencyForDisplay(amount: number, storedCurrency: string = 'USD') {
+    // Most monetary values in the database are stored in USD
+    // Only convert if the stored currency differs from display currency
+    if (storedCurrency === $currentCurrency.code) {
+      // No conversion needed - just format
+      return formatCurrency(amount, $currentCurrency.code, $locale);
+    } else {
+      // Convert from stored currency to display currency
+      return formatCurrencyWithConversion(amount, storedCurrency, $currentCurrency.code, $locale);
+    }
   }
 
   function formatDate(date: string) {
@@ -182,14 +188,14 @@
     },
     {
       title: $_('dashboard.stats.monthlyRevenue'),
-      value: formatCurrency(data.stats?.totalSalesThisMonth || 0),
+      value: formatCurrencyForDisplay(data.stats?.totalSalesThisMonth || 0),
       icon: DollarSign,
       color: 'bg-yellow-500',
       change: $_('dashboard.stats.salesCount', { values: { count: data.stats?.salesCountThisMonth || 0 } })
     },
     {
       title: $_('dashboard.stats.inventoryValue'),
-      value: formatCurrency(data.stats?.inventoryValue || 0),
+      value: formatCurrencyForDisplay(data.stats?.inventoryValue || 0),
       icon: TrendingUp,
       color: 'bg-purple-500',
       change: null
@@ -207,12 +213,22 @@
 <div class="space-y-8">
   <!-- Welcome Header -->
   <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-lg p-6 text-white">
-    <h1 class="text-3xl font-bold mb-2">
-      {$_('nav.dashboard')}
-    </h1>
-    <p class="text-blue-100">
-      {$_('dashboard.welcome', { values: { name: data.user?.name } })}
-    </p>
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-bold mb-2">
+          {$_('nav.dashboard')}
+        </h1>
+        <p class="text-blue-100">
+          {$_('dashboard.welcome', { values: { name: data.user?.name } })}
+        </p>
+      </div>
+      <div class="flex items-center space-x-4">
+        <div class="text-blue-100 text-sm">
+          {$_('dashboard.currency', { values: { currency: $currentCurrency.nameEn } }) || `Currency: ${$currentCurrency.nameEn}`}
+        </div>
+        <CurrencySwitcher />
+      </div>
+    </div>
   </div>
 
   <!-- Stats Grid -->
@@ -300,7 +316,7 @@
               </div>
               <div class="text-right">
                 <span class="font-semibold text-green-600 dark:text-green-400">
-                  {formatCurrency(sale.netAmount)}
+                  {formatCurrencyForDisplay(sale.netAmount)}
                 </span>
                 <p class="text-xs text-gray-500 dark:text-gray-400">
                   by {sale.user.name}

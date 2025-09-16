@@ -241,7 +241,7 @@
         <span class="text-sm font-medium text-blue-900 dark:text-blue-100">{$_('purchases.newPurchase')}</span>
       </a>
       
-      <a href="/suppliers" class="flex flex-col items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors dark:bg-green-900 dark:hover:bg-green-800">
+      <a href="/accounts/suppliers" class="flex flex-col items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors dark:bg-green-900 dark:hover:bg-green-800">
         <Truck class="h-8 w-8 text-green-600 mb-2" />
         <span class="text-sm font-medium text-green-900 dark:text-green-100">{$_('purchases.manageSuppliers')}</span>
       </a>

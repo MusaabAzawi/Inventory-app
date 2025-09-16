@@ -2,17 +2,18 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
   import { locale } from 'svelte-i18n';
-  import { 
-    Plus, 
-    ShoppingCart, 
-    DollarSign, 
-    TrendingUp, 
-    Eye, 
-    Edit, 
+  import {
+    Plus,
+    ShoppingCart,
+    DollarSign,
+    TrendingUp,
+    Eye,
+    Edit,
     RotateCcw,
     Calendar
   } from 'lucide-svelte';
   import DataTable from '$lib/components/ui/DataTable.svelte';
+  import { displayAmount } from '$lib/utils/currencyHelper';
   import type { PageData } from './$types';
   
   export let data: PageData;
@@ -26,12 +27,6 @@
     { key: 'user.name', label: $_('sales.staff'), sortable: true }
   ];
 
-  function formatCurrency(amount: number) {
-    return new Intl.NumberFormat($locale === 'ar' ? 'ar-SA' : 'en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  }
 
   function formatDate(date: string) {
     return new Date(date).toLocaleDateString($locale === 'ar' ? 'ar-SA' : 'en-US', {
@@ -91,7 +86,7 @@
               {$_('sales.todaysSales')}
             </p>
             <p class="text-2xl font-semibold text-gray-900 dark:text-white">
-              {formatCurrency(data.stats.today.amount)}
+              {displayAmount(data.stats.today.amount)}
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-400">
               {$_('sales.transactions', { values: { count: data.stats.today.count } })}
@@ -111,7 +106,7 @@
               {$_('sales.thisMonth')}
             </p>
             <p class="text-2xl font-semibold text-gray-900 dark:text-white">
-              {formatCurrency(data.stats.thisMonth.amount)}
+              {displayAmount(data.stats.thisMonth.amount)}
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-400">
               {$_('sales.transactions', { values: { count: data.stats.thisMonth.count } })}
@@ -131,7 +126,7 @@
               {$_('sales.totalSales')}
             </p>
             <p class="text-2xl font-semibold text-gray-900 dark:text-white">
-              {formatCurrency(data.stats.total.amount)}
+              {displayAmount(data.stats.total.amount)}
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-400">
               {$_('sales.transactions', { values: { count: data.stats.total.count } })}
@@ -173,11 +168,11 @@
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
           <div>
             <p class="font-semibold text-green-600 dark:text-green-400">
-              {formatCurrency(item.netAmount)}
+              {displayAmount(item.netAmount)}
             </p>
             {#if item.discount > 0}
               <p class="text-xs text-gray-500 dark:text-gray-400">
-                {$_('sales.discount', { values: { amount: formatCurrency(item.discount) } })}
+                {$_('sales.discount', { values: { amount: displayAmount(item.discount) } })}
               </p>
             {/if}
           </div>
