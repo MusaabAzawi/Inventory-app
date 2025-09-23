@@ -1,63 +1,56 @@
-<!-- src/routes/(app)/purchases/[id]/edit/+page.svelte -->
+<!-- src/routes/(app)/sales/[id]/edit/+page.svelte -->
 <script lang="ts">
   import { _ } from 'svelte-i18n';
   import { locale } from 'svelte-i18n';
   import { enhance } from '$app/forms';
   import { notifications } from '$lib/stores/notifications';
-  import { 
-    ArrowLeft, 
-    Plus, 
-    Trash2, 
-    ShoppingBag, 
-    Truck, 
-    Scan,
+  import {
+    ArrowLeft,
+    Plus,
+    Trash2,
+    ShoppingCart,
+    User,
     Calculator,
-    Calendar,
-    DollarSign,
-    Info,
-    Package,
-    Save
+    Save,
+    AlertTriangle
   } from 'lucide-svelte';
-  import BarcodeScanner from '$lib/components/barcode/BarcodeScanner.svelte';
   import type { PageData, ActionData } from './$types';
-  
+
   export let data: PageData;
   export let form: ActionData;
-  
-  let showBarcodeScanner = false;
+
   let isSubmitting = false;
-  
-  // Purchase data
-  let purchaseData = {
-    supplierId: data.purchase.supplierId || '',
-    discount: data.purchase.discount || 0,
-    tax: data.purchase.tax || 0,
-    purchaseDate: new Date(data.purchase.purchaseDate).toISOString().split('T')[0],
-    notes: data.purchase.notes || ''
+
+  // Sale data - initialize with existing sale data
+  let saleData = {
+    customerId: data.sale.customerId || '',
+    paymentMethod: data.sale.paymentMethod || 'CASH',
+    discount: data.sale.discount || 0,
+    tax: data.sale.tax || 0,
+    notes: data.sale.notes || ''
   };
-  
-  // Purchase items
+
+  // Sale items - initialize with existing sale items
   let items: Array<{
     productId: string;
     quantity: number;
     price: number;
     total: number;
     weight?: number;
+    unitType?: 'piece' | 'kilo';
     product?: any;
-    lastPurchasePrice?: number;
-  }> = data.purchase.items.map(item => ({
+  }> = data.sale.items.map(item => ({
     productId: item.product.id,
     quantity: item.quantity,
     price: item.price,
     total: item.total,
     weight: item.weight || 0,
-    product: item.product,
-    lastPurchasePrice: (item.product as any).lastPurchase?.price
+    product: item.product
   }));
 
   // Computed values
   $: subtotal = items.reduce((sum, item) => sum + item.total, 0);
-  $: netAmount = subtotal - purchaseData.discount + purchaseData.tax;
+  $: netAmount = subtotal - saleData.discount + saleData.tax;
 
   function addItem() {
     items = [...items, {
@@ -65,7 +58,8 @@
       quantity: 1,
       price: 0,
       total: 0,
-      weight: 0
+      weight: 0,
+      unitType: 'piece'
     }];
   }
 
@@ -75,84 +69,55 @@
 
   function updateItem(index: number, field: string, value: any) {
     items[index] = { ...items[index], [field]: value };
-    
+
     if (field === 'productId') {
       const product = data.products.find(p => p.id === value);
       if (product) {
         items[index].product = product;
-        // Use last purchase price if available, otherwise use cost price
-        if (product.lastPurchase?.price) {
-          items[index].price = product.lastPurchase.price;
-          items[index].lastPurchasePrice = product.lastPurchase.price;
-        } else {
-          items[index].price = product.costPrice;
-        }
+        items[index].price = product.sellingPrice;
+        // Set unit type based on product category
+        items[index].unitType = isFoodCategory(product) ? 'kilo' : 'piece';
         updateItemTotal(index);
       }
-    } else if (field === 'quantity' || field === 'price') {
+    } else if (field === 'quantity' || field === 'price' || field === 'weight' || field === 'unitType') {
       updateItemTotal(index);
     }
-    
+
     items = items; // Trigger reactivity
   }
 
   function updateItemTotal(index: number) {
-    items[index].total = items[index].quantity * items[index].price;
+    const item = items[index];
+    if (item.unitType === 'kilo' && item.weight) {
+      // For kilo-based products, calculate total based on weight
+      items[index].total = item.weight * item.price;
+    } else {
+      // For piece-based products, calculate total based on quantity
+      items[index].total = item.quantity * item.price;
+    }
   }
 
   function isFoodCategory(product: any) {
     if (!product?.category) return false;
     const categoryName = $locale === 'ar' ? product.category.nameAr : product.category.nameEn;
-    return categoryName.toLowerCase().includes('food') || 
+    return categoryName.toLowerCase().includes('food') ||
            categoryName.toLowerCase().includes('طعام') ||
            categoryName.toLowerCase().includes('غذاء');
   }
 
-  function handleBarcodeScanned(barcode: string) {
-    showBarcodeScanner = false;
-    
-    // Find product by barcode
-    const product = data.products.find(p => p.barcode === barcode);
-    if (product) {
-      // Check if item already exists
-      const existingIndex = items.findIndex(item => item.productId === product.id);
-      
-      if (existingIndex >= 0) {
-        // Increase quantity
-        updateItem(existingIndex, 'quantity', items[existingIndex].quantity + 1);
-      } else {
-        // Add new item
-        const price = product.lastPurchase?.price || product.costPrice;
-        items = [...items, {
-          productId: product.id,
-          quantity: 1,  
-          price: price,
-          total: price,
-          weight: 0,
-          product,
-          lastPurchasePrice: product.lastPurchase?.price
-        }];
-      }
-      
-      notifications.success($_('purchases.productAdded'), $_('purchases.productAddedMessage', { values: { name: $locale === 'ar' ? product.nameAr : product.nameEn } }));
-    } else {
-      notifications.error($_('purchases.productNotFound'), $_('purchases.noProductWithBarcode', { values: { barcode } }));
-    }
-  }
-
   function handleSubmit() {
-    return async ({ result, update }: any) => {
+    return async ({ result, update }) => {
       isSubmitting = false;
 
       if (result.type === 'failure') {
-        notifications.error($_('purchases.purchaseFailed'), result.data?.error || $_('purchases.failedToUpdate'));
+        notifications.error($_('sales.saleFailed'), result.data?.error || $_('sales.failedToUpdate'));
         await update();
       } else if (result.type === 'redirect') {
-        notifications.success($_('purchases.purchaseUpdated'), $_('purchases.purchaseUpdatedMessage'));
+        notifications.success($_('sales.saleUpdated'), $_('sales.saleUpdatedMessage'));
         // Let redirect happen naturally
         return;
       } else {
-        notifications.success($_('purchases.purchaseUpdated'), $_('purchases.purchaseUpdatedMessage'));
+        notifications.success($_('sales.saleUpdated'), $_('sales.saleUpdatedMessage'));
         await update();
       }
     };
@@ -161,58 +126,69 @@
   function validateForm() {
     // Check if we have any items
     if (items.length === 0) {
-      notifications.error($_('purchases.validationError'), $_('purchases.addAtLeastOneItem'));
+      notifications.error($_('sales.validationError'), $_('sales.addAtLeastOneItem'));
       return false;
     }
-    
+
     // Check if all items have products selected
     const itemsWithoutProducts = items.filter(item => !item.productId);
     if (itemsWithoutProducts.length > 0) {
-      notifications.error($_('purchases.validationError'), $_('purchases.selectProductForAll'));
+      notifications.error($_('sales.validationError'), $_('sales.selectProductForAll'));
       return false;
     }
-    
+
     // Check if all items have valid quantities
     const itemsWithInvalidQty = items.filter(item => !item.quantity || item.quantity <= 0);
     if (itemsWithInvalidQty.length > 0) {
-      notifications.error($_('purchases.validationError'), $_('purchases.enterValidQuantities'));
+      notifications.error($_('sales.validationError'), $_('sales.enterValidQuantities'));
       return false;
     }
-    
+
     // Check if all items have valid prices
     const itemsWithInvalidPrice = items.filter(item => !item.price || item.price <= 0);
     if (itemsWithInvalidPrice.length > 0) {
-      notifications.error($_('purchases.validationError'), $_('purchases.enterValidPrices'));
+      notifications.error($_('sales.validationError'), $_('sales.enterValidPrices'));
       return false;
     }
-    
-    // Check weight for food category items
-    for (const item of items) {
-      if (item.product && isFoodCategory(item.product) && (!item.weight || item.weight <= 0)) {
-        notifications.error($_('purchases.validationError'), $_('purchases.weightRequiredForFood', {
-          values: { product: $locale === 'ar' ? item.product.nameAr : item.product.nameEn }
-        }));
-        return false;
-      }
+
+    // Check payment method
+    if (!saleData.paymentMethod) {
+      notifications.error($_('sales.validationError'), $_('sales.selectPaymentMethod'));
+      return false;
     }
-    
+
     return true;
   }
 </script>
 
-<div class="space-y-6">
+<div class="space-y-6" dir={$locale === 'ar' ? 'rtl' : 'ltr'}>
   <!-- Header -->
   <div class="flex items-center gap-4">
-    <a href="/purchases/{data.purchase.id}" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
-      <ArrowLeft class="w-6 h-6" />
+    <a href="/sales/{data.sale.id}" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+      <ArrowLeft class="w-6 h-6 {$locale === 'ar' ? 'rotate-180' : ''}" />
     </a>
     <div>
       <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
-        {$_('purchases.editPurchase')} #{data.purchase.invoiceNumber}
+        {$_('sales.editSale')} #{data.sale.invoiceNumber}
       </h1>
       <p class="text-gray-600 dark:text-gray-400 mt-1">
-        {$_('purchases.editPurchaseSubtitle')}
+        {$_('sales.editSaleSubtitle')}
       </p>
+    </div>
+  </div>
+
+  <!-- Warning about edit time limit -->
+  <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 dark:bg-orange-900/20 dark:border-orange-800">
+    <div class="flex">
+      <AlertTriangle class="h-5 w-5 text-orange-400 ltr:mr-2 rtl:ml-2 flex-shrink-0" />
+      <div>
+        <h3 class="text-sm font-medium text-orange-800 dark:text-orange-200">
+          {$_('sales.editTimeLimit')}
+        </h3>
+        <p class="text-sm text-orange-700 dark:text-orange-300 mt-1">
+          {$_('sales.editTimeLimitMessage')}
+        </p>
+      </div>
     </div>
   </div>
 
@@ -236,41 +212,31 @@
     {/if}
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Purchase Items -->
+      <!-- Sale Items -->
       <div class="lg:col-span-2 space-y-6">
         <!-- Items Header -->
         <div class="flex items-center justify-between">
           <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-            {$_('purchases.purchaseItems')}
+            {$_('sales.saleItems')}
           </h2>
-          <div class="flex gap-2">
-            <button
-              type="button"
-              on:click={() => showBarcodeScanner = true}
-              class="btn-secondary btn-sm"
-            >
-              <Scan class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
-              {$_('forms.scanProductBarcode')}
-            </button>
-            <button
-              type="button"
-              on:click={addItem}
-              class="btn-primary btn-sm"
-            >
-              <Plus class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
-              {$_('purchases.addItem')}
-            </button>
-          </div>
+          <button
+            type="button"
+            on:click={addItem}
+            class="btn-primary btn-sm"
+          >
+            <Plus class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+            {$_('sales.addItem')}
+          </button>
         </div>
 
         <!-- Items List -->
         <div class="space-y-4">
           {#each items as item, index}
             <div class="card p-4">
-              <div class="grid grid-cols-1 md:grid-cols-8 gap-4 items-end">
+              <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
                 <!-- Product -->
                 <div class="md:col-span-2">
-                  <label for="product-{index}" class="label">{$_('purchases.product')}</label>
+                  <label for="product-{index}" class="label">{$_('sales.product')}</label>
                   <select
                     id="product-{index}"
                     bind:value={item.productId}
@@ -278,11 +244,11 @@
                     class="input text-sm"
                     required
                   >
-                    <option value="">{$_('purchases.selectProduct')}</option>
+                    <option value="">{$_('sales.selectProduct')}</option>
                     {#each data.products as product}
                       <option value={product.id}>
                         {$locale === 'ar' ? product.nameAr : product.nameEn} - {product.sku}
-                        ({product.quantity} {$_('purchases.stock')})
+                        ({product.quantity} in stock)
                       </option>
                     {/each}
                   </select>
@@ -290,7 +256,7 @@
 
                 <!-- Quantity -->
                 <div>
-                  <label for="quantity-{index}" class="label">{$_('purchases.quantity')}</label>
+                  <label for="quantity-{index}" class="label">{$_('sales.quantity')}</label>
                   <input
                     id="quantity-{index}"
                     type="number"
@@ -306,7 +272,7 @@
                 {#if item.product && isFoodCategory(item.product)}
                   <div>
                     <label for="weight-{index}" class="label">
-                      {$_('purchases.weight')} (kg) <span class="text-red-500">*</span>
+                      {$_('sales.weight')} (kg)
                     </label>
                     <input
                       id="weight-{index}"
@@ -316,14 +282,13 @@
                       bind:value={item.weight}
                       on:input={(e) => updateItem(index, 'weight', parseFloat((e.target as HTMLInputElement).value) || 0)}
                       class="input"
-                      required
                     />
                   </div>
                 {/if}
 
                 <!-- Price -->
                 <div>
-                  <label for="price-{index}" class="label">{$_('purchases.costPrice')}</label>
+                  <label for="price-{index}" class="label">{$_('sales.price')}</label>
                   <input
                     id="price-{index}"
                     type="number"
@@ -334,16 +299,11 @@
                     class="input"
                     required
                   />
-                  {#if item.lastPurchasePrice}
-                    <p class="text-xs text-gray-500 mt-1">
-                      {$_('purchases.lastPrice')}: ${item.lastPurchasePrice.toFixed(2)}
-                    </p>
-                  {/if}
                 </div>
 
                 <!-- Total -->
                 <div>
-                  <label class="label">{$_('purchases.total')}</label>
+                  <label class="label">{$_('sales.total')}</label>
                   <div class="input bg-gray-50 dark:bg-gray-700">
                     ${item.total.toFixed(2)}
                   </div>
@@ -366,9 +326,8 @@
               {#if item.product}
                 <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                   <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                    <span>{$_('purchases.currentStock')}: {item.product.quantity}</span>
-                    <span>{$_('purchases.category')}: {item.product.category ? ($locale === 'ar' ? item.product.category.nameAr : item.product.category.nameEn) : $_('purchases.none')}</span>
-                    <span>{$_('purchases.currentSellingPrice')}: ${item.product.sellingPrice.toFixed(2)}</span>
+                    <span>{$_('sales.available')}: {item.product.quantity}</span>
+                    <span>{$_('sales.category')}: {item.product.category ? ($locale === 'ar' ? item.product.category.nameAr : item.product.category.nameEn) : $_('sales.none')}</span>
                   </div>
                 </div>
               {/if}
@@ -377,103 +336,107 @@
         </div>
       </div>
 
-      <!-- Purchase Summary -->
+      <!-- Sale Summary -->
       <div class="space-y-6">
-        <!-- Supplier Selection -->
+        <!-- Customer Selection -->
         <div class="card p-4">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-            <Truck class="h-5 w-5 ltr:mr-2 rtl:ml-2" />
-            {$_('purchases.supplier')}
+            <User class="h-5 w-5 ltr:mr-2 rtl:ml-2" />
+            {$_('sales.customer')}
           </h3>
-          
+
           <div class="space-y-4">
             <div>
-              <label for="supplier" class="label">{$_('purchases.selectSupplier')}</label>
+              <label for="customer" class="label">{$_('sales.selectCustomer')}</label>
               <select
-                id="supplier"
-                bind:value={purchaseData.supplierId}
+                id="customer"
+                bind:value={saleData.customerId}
                 class="input"
               >
-                <option value="">{$_('purchases.noSupplierDirect')}</option>
-                {#each data.suppliers as supplier}
-                  <option value={supplier.id}>
-                    {$locale === 'ar' ? supplier.nameAr : supplier.nameEn}
-                    {#if supplier.phone} - {supplier.phone}{/if}
+                <option value="">{$_('sales.walkInCustomer')}</option>
+                {#each data.customers as customer}
+                  <option value={customer.id}>
+                    {$locale === 'ar' ? customer.nameAr : customer.nameEn}
+                    {#if customer.phone} - {customer.phone}{/if}
                   </option>
                 {/each}
               </select>
             </div>
-
-            <!-- Purchase Date -->
-            <div>
-              <label for="purchaseDate" class="label">{$_('purchases.date')}</label>
-              <input
-                id="purchaseDate"
-                type="date"
-                bind:value={purchaseData.purchaseDate}
-                class="input"
-                required
-              />
-            </div>
           </div>
         </div>
 
-        <!-- Cost Details -->
+        <!-- Payment & Totals -->
         <div class="card p-4">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
             <Calculator class="h-5 w-5 ltr:mr-2 rtl:ml-2" />
-            {$_('purchases.costDetails')}
+            {$_('sales.paymentDetails')}
           </h3>
-          
+
           <div class="space-y-4">
             <!-- Subtotal -->
             <div class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-400">{$_('purchases.subtotal')}</span>
+              <span class="text-gray-600 dark:text-gray-400">{$_('sales.subtotal')}:</span>
               <span class="font-semibold">${subtotal.toFixed(2)}</span>
             </div>
 
             <!-- Discount -->
             <div>
-              <label for="discount" class="label">{$_('purchases.discount')}</label>
+              <label for="discount" class="label">{$_('sales.discount')}</label>
               <input
                 id="discount"
                 type="number"
                 step="0.01"
                 min="0"
                 max={subtotal}
-                bind:value={purchaseData.discount}
+                bind:value={saleData.discount}
                 class="input"
               />
             </div>
 
             <!-- Tax -->
             <div>
-              <label for="tax" class="label">{$_('purchases.tax')}</label>
+              <label for="tax" class="label">{$_('sales.tax')}</label>
               <input
                 id="tax"
                 type="number"
                 step="0.01"
                 min="0"
-                bind:value={purchaseData.tax}
+                bind:value={saleData.tax}
                 class="input"
               />
             </div>
 
-            <!-- Total Cost -->
-            <div class="flex justify-between text-lg font-semibold border-t pt-4">
-              <span>{$_('purchases.totalCost')}</span>
+            <!-- Net Amount -->
+            <div class="flex justify-between text-lg font-semibold border-t pt-4 dark:border-gray-700">
+              <span>{$_('sales.netAmount')}:</span>
               <span class="text-green-600">${netAmount.toFixed(2)}</span>
+            </div>
+
+            <!-- Payment Method -->
+            <div>
+              <label for="payment-method" class="label">{$_('sales.paymentMethod')}</label>
+              <select
+                id="payment-method"
+                bind:value={saleData.paymentMethod}
+                class="input"
+                required
+              >
+                <option value="CASH">{$_('sales.cash')}</option>
+                <option value="CREDIT">{$_('sales.credit')}</option>
+                <option value="CARD">{$_('sales.card')}</option>
+              </select>
             </div>
 
             <!-- Notes -->
             <div>
-              <label for="notes" class="label">{$_('purchases.notesOptional')}</label>
+              <label for="notes" class="label">{$_('sales.notes')}</label>
               <textarea
                 id="notes"
-                bind:value={purchaseData.notes}
+                bind:value={saleData.notes}
                 rows="3"
                 class="input"
-                placeholder={$_('purchases.notesPlaceholder')}
+                placeholder={$_('sales.notesPlaceholder')}
+                dir={$locale === 'ar' ? 'rtl' : 'ltr'}
               ></textarea>
             </div>
           </div>
@@ -490,17 +453,17 @@
           {:else}
             <Save class="h-5 w-5 ltr:mr-2 rtl:ml-2" />
           {/if}
-          {isSubmitting ? $_('purchases.updatingPurchase') : $_('purchases.updatePurchase')}
+          {isSubmitting ? $_('sales.updatingSale') : $_('sales.updateSale')}
         </button>
       </div>
     </div>
 
     <!-- Hidden fields for form submission -->
-    <input type="hidden" name="supplierId" value={purchaseData.supplierId} />
-    <input type="hidden" name="discount" value={purchaseData.discount} />
-    <input type="hidden" name="tax" value={purchaseData.tax} />
-    <input type="hidden" name="purchaseDate" value={purchaseData.purchaseDate} />
-    <input type="hidden" name="notes" value={purchaseData.notes} />
+    <input type="hidden" name="customerId" value={saleData.customerId} />
+    <input type="hidden" name="paymentMethod" value={saleData.paymentMethod} />
+    <input type="hidden" name="discount" value={saleData.discount} />
+    <input type="hidden" name="tax" value={saleData.tax} />
+    <input type="hidden" name="notes" value={saleData.notes} />
     <input type="hidden" name="items" value={JSON.stringify(items.map(item => ({
       productId: item.productId,
       quantity: item.quantity,
@@ -509,12 +472,3 @@
     })).filter(item => item.productId && item.quantity > 0 && item.price > 0))} />
   </form>
 </div>
-
-<!-- Barcode Scanner Modal -->
-{#if showBarcodeScanner}
-  <BarcodeScanner
-    onScan={handleBarcodeScanned}
-    onClose={() => showBarcodeScanner = false}
-    title={$_('forms.scanProductBarcode')}
-  />
-{/if}

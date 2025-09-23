@@ -64,11 +64,11 @@
   }
 </script>
 
-<div class="space-y-6">
+<div class="space-y-6" dir={$locale === 'ar' ? 'rtl' : 'ltr'}>
   <!-- Header -->
   <div class="flex items-center gap-4">
     <a href="/cash" class="btn-secondary btn-sm">
-      <ArrowLeft class="h-4 w-4" />
+      <ArrowLeft class="h-4 w-4 {$locale === 'ar' ? 'rotate-180' : ''}" />
     </a>
     <div>
       <h1 class="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -141,7 +141,7 @@
                   {:else}
                     <Receipt class="h-4 w-4" />
                   {/if}
-                  <span class="text-sm font-medium">{type.label}</span>
+                  <span class="text-sm font-medium">{$_(type.labelKey)}</span>
                 </div>
               </label>
             {/each}
@@ -182,7 +182,7 @@
               {$_('cash.amount')} *
             </label>
             <div class="relative">
-              <DollarSign class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <DollarSign class="absolute {$locale === 'ar' ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 id="amount"
                 name="amount"
@@ -191,7 +191,8 @@
                 min="0"
                 bind:value={amount}
                 required
-                class="input pl-10"
+                class="input {$locale === 'ar' ? 'pr-10' : 'pl-10'}"
+                dir="ltr"
                 placeholder="0.00"
                 class:border-red-300={form?.fields?.amount}
               />
@@ -266,6 +267,7 @@
             class="input"
             placeholder={$_('cash.paymentDescriptionPlaceholder')}
             class:border-red-300={form?.fields?.description}
+            dir={$locale === 'ar' ? 'rtl' : 'ltr'}
           ></textarea>
           {#if form?.fields?.description}
             <p class="text-sm text-red-600 mt-1">{form.fields.description[0]}</p>
@@ -278,13 +280,14 @@
             {$_('cash.referenceId')}
           </label>
           <div class="relative">
-            <FileText class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <FileText class="absolute {$locale === 'ar' ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
               id="referenceId"
               name="referenceId"
               type="text"
               bind:value={referenceId}
-              class="input pl-10"
+              class="input {$locale === 'ar' ? 'pr-10' : 'pl-10'}"
+              dir={$locale === 'ar' ? 'rtl' : 'ltr'}
               placeholder={$_('cash.referenceIdPlaceholder')}
             />
           </div>
@@ -303,7 +306,7 @@
               <div class="flex justify-between text-sm">
                 <span class="text-red-700 dark:text-red-300">{$_('cash.paymentType')}:</span>
                 <span class="font-medium text-red-900 dark:text-red-100">
-                  {data.paymentTypes.find(t => t.id === paymentType)?.label}
+                  {$_(data.paymentTypes.find(t => t.id === paymentType)?.labelKey || 'cash.supplierPayment')}
                 </span>
               </div>
               {#if paymentType === 'PAYMENT' && selectedSupplier}

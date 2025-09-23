@@ -49,24 +49,53 @@ export const load: PageServerLoad = async ({ params, locals }) => {
       redirect(302, '/purchases');
     }
 
-    // Load products with categories
-    const products = await prisma.product.findMany({
-      where: { isActive: true },
-      include: {
-        category: true
-      },
-      orderBy: { nameEn: 'asc' }
-    });
+    // Load products with categories and last purchase data
+    const [products, suppliers] = await Promise.all([
+      prisma.product.findMany({
+        where: { isActive: true },
+        include: {
+          category: true,
+          // Get last purchase price for each product
+          purchaseItems: {
+            orderBy: { purchase: { purchaseDate: 'desc' } },
+            take: 1,
+            include: {
+              purchase: {
+                select: {
+                  purchaseDate: true,
+                  supplier: {
+                    select: {
+                      nameEn: true,
+                      nameAr: true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        orderBy: { nameEn: 'asc' }
+      }),
+      prisma.supplier.findMany({
+        where: { isActive: true },
+        orderBy: { nameEn: 'asc' }
+      })
+    ]);
 
-    // Load suppliers
-    const suppliers = await prisma.supplier.findMany({
-      where: { isActive: true },
-      orderBy: { nameEn: 'asc' }
-    });
+    // Transform products to include last purchase info
+    const productsWithLastPurchase = products.map(product => ({
+      ...product,
+      lastPurchase: product.purchaseItems.length > 0 ? {
+        price: product.purchaseItems[0].price,
+        date: product.purchaseItems[0].purchase.purchaseDate,
+        supplier: product.purchaseItems[0].purchase.supplier
+      } : null,
+      purchaseItems: undefined // Remove the raw data
+    }));
 
     return {
       purchase,
-      products,
+      products: productsWithLastPurchase,
       suppliers
     };
   } catch (error) {
@@ -105,6 +134,56 @@ export const actions: Actions = {
         // Calculate totals
         const totalAmount = validatedData.items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
         const netAmount = totalAmount - validatedData.discount + validatedData.tax;
+
+        // Get current purchase items to calculate inventory changes
+        const currentItems = await tx.purchaseItem.findMany({
+          where: { purchaseId: purchaseId },
+          include: { product: true }
+        });
+
+        // Calculate inventory adjustments
+        const inventoryChanges = new Map();
+
+        // First, reduce inventory for current items (removing them)
+        for (const item of currentItems) {
+          const key = item.productId;
+          const current = inventoryChanges.get(key) || 0;
+          inventoryChanges.set(key, current - item.quantity);
+        }
+
+        // Then, add inventory for new items
+        for (const item of validatedData.items) {
+          const key = item.productId;
+          const current = inventoryChanges.get(key) || 0;
+          inventoryChanges.set(key, current + item.quantity);
+        }
+
+        // Update product quantities and create inventory history
+        for (const [productId, quantityChange] of inventoryChanges) {
+          if (quantityChange !== 0) {
+            const product = await tx.product.findUnique({ where: { id: productId } });
+            if (product) {
+              const newQuantity = product.quantity + quantityChange;
+
+              await tx.product.update({
+                where: { id: productId },
+                data: { quantity: newQuantity }
+              });
+
+              await tx.inventoryHistory.create({
+                data: {
+                  productId,
+                  userId: locals.user!.id,
+                  action: 'PURCHASE_EDIT',
+                  previousQuantity: product.quantity,
+                  newQuantity,
+                  quantityChange,
+                  reason: `Purchase ${purchaseId} edited`
+                }
+              });
+            }
+          }
+        }
 
         // Delete existing items
         await tx.purchaseItem.deleteMany({

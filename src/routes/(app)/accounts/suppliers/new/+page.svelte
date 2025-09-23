@@ -1,6 +1,6 @@
 <!-- src/routes/(app)/accounts/suppliers/new/+page.svelte -->
 <script lang="ts">
-  import { _ } from 'svelte-i18n';
+  import { _, locale } from 'svelte-i18n';
   import { enhance } from '$app/forms';
   import { notifications } from '$lib/stores/notifications';
   import { 
@@ -58,11 +58,11 @@
   }
 </script>
 
-<div class="space-y-6">
+<div class="space-y-6" dir={$locale === 'ar' ? 'rtl' : 'ltr'}>
   <!-- Header -->
   <div class="flex items-center gap-4">
     <a href="/accounts" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
-      <ArrowLeft class="w-6 h-6" />
+      <ArrowLeft class="w-6 h-6 {$locale === 'ar' ? 'rotate-180' : ''}" />
     </a>
     <div>
       <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
@@ -152,14 +152,15 @@
               Phone Number
             </label>
             <div class="relative">
-              <Phone class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Phone class="absolute {$locale === 'ar' ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 id="phone"
                 name="phone"
                 type="tel"
-                class="input pl-10"
+                class="input {$locale === 'ar' ? 'pr-10' : 'pl-10'}"
                 value={form?.phone ?? ''}
                 placeholder="+1234567890"
+                dir="ltr"
               />
             </div>
           </div>
@@ -170,12 +171,13 @@
               Email Address
             </label>
             <div class="relative">
-              <Mail class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Mail class="absolute {$locale === 'ar' ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 id="email"
                 name="email"
                 type="email"
-                class="input pl-10"
+                class="input {$locale === 'ar' ? 'pr-10' : 'pl-10'}"
+                dir="ltr"
                 value={form?.email ?? ''}
                 placeholder="supplier@company.com"
               />
@@ -189,14 +191,15 @@
             Business Address
           </label>
           <div class="relative">
-            <MapPin class="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <MapPin class="absolute {$locale === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400" />
             <textarea
               id="address"
               name="address"
               rows="3"
-              class="input pl-10"
+              class="input {$locale === 'ar' ? 'pr-10' : 'pl-10'}"
               value={form?.address ?? ''}
               placeholder={$_('suppliers.enterBusinessAddress')}
+              dir={$locale === 'ar' ? 'rtl' : 'ltr'}
             ></textarea>
           </div>
         </div>
@@ -235,7 +238,7 @@
       <!-- Form Actions -->
       <div class="flex justify-end gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
         <a href="/accounts" class="btn-secondary btn-md">
-          <ArrowLeft class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+          <ArrowLeft class="h-4 w-4 ltr:mr-2 rtl:ml-2 {$locale === 'ar' ? 'rotate-180' : ''}" />
           {$_('common.cancel')}
         </a>
         <button 

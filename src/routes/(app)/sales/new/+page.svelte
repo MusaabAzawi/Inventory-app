@@ -37,6 +37,8 @@
     quantity: number;
     price: number;
     total: number;
+    weight?: number;
+    unitType?: 'piece' | 'kilo';
     product?: any;
   }> = [];
 
@@ -49,7 +51,9 @@
       productId: '',
       quantity: 1,
       price: 0,
-      total: 0
+      total: 0,
+      weight: 0,
+      unitType: 'piece'
     }];
   }
 
@@ -65,9 +69,11 @@
       if (product) {
         items[index].product = product;
         items[index].price = product.sellingPrice;
+        // Set unit type based on product category
+        items[index].unitType = isFoodCategory(product) ? 'kilo' : 'piece';
         updateItemTotal(index);
       }
-    } else if (field === 'quantity' || field === 'price') {
+    } else if (field === 'quantity' || field === 'price' || field === 'weight' || field === 'unitType') {
       updateItemTotal(index);
     }
     
@@ -75,7 +81,22 @@
   }
 
   function updateItemTotal(index: number) {
-    items[index].total = items[index].quantity * items[index].price;
+    const item = items[index];
+    if (item.unitType === 'kilo' && item.weight) {
+      // For kilo-based products, calculate total based on weight
+      items[index].total = item.weight * item.price;
+    } else {
+      // For piece-based products, calculate total based on quantity
+      items[index].total = item.quantity * item.price;
+    }
+  }
+
+  function isFoodCategory(product: any) {
+    if (!product?.category) return false;
+    const categoryName = $locale === 'ar' ? product.category.nameAr : product.category.nameEn;
+    return categoryName.toLowerCase().includes('food') ||
+           categoryName.toLowerCase().includes('طعام') ||
+           categoryName.toLowerCase().includes('غذاء');
   }
 
   function handleBarcodeScanned(barcode: string) {
@@ -94,9 +115,11 @@
         // Add new item
         items = [...items, {
           productId: product.id,
-          quantity: 1,  
+          quantity: 1,
           price: product.sellingPrice,
           total: product.sellingPrice,
+          weight: 0,
+          unitType: 'piece',
           product
         }];
       }
@@ -185,11 +208,11 @@
   }
 </script>
 
-<div class="space-y-6">
+<div class="space-y-6" dir={$locale === 'ar' ? 'rtl' : 'ltr'}>
   <!-- Header -->
   <div class="flex items-center gap-4">
     <a href="/sales" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
-      <ArrowLeft class="w-6 h-6" />
+      <ArrowLeft class="w-6 h-6 {$locale === 'ar' ? 'rotate-180' : ''}" />
     </a>
     <div>
       <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
@@ -201,16 +224,16 @@
     </div>
   </div>
 
-  <form 
-    method="POST" 
+  <form
+    method="POST"
     use:enhance={handleSubmit}
-    on:submit|preventDefault={() => {
-      if (validateForm()) {
-        isSubmitting = true;
-        // Let the form submit naturally
-        return true;
+    on:submit={(e) => {
+      if (!validateForm()) {
+        e.preventDefault();
+        return false;
       }
-      return false;
+      isSubmitting = true;
+      return true;
     }}
     class="space-y-6"
   >
@@ -259,7 +282,7 @@
                   <select
                     id="product-{index}"
                     bind:value={item.productId}
-                    on:change={(e) => updateItem(index, 'productId', e.target.value)}
+                    on:change={(e) => updateItem(index, 'productId', (e.target as HTMLSelectElement).value)}
                     class="input text-sm"
                     required
                   >
@@ -282,7 +305,7 @@
                     min="1"
                     max={item.product?.quantity || 999}
                     bind:value={item.quantity}
-                    on:input={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 0)}
+                    on:input={(e) => updateItem(index, 'quantity', parseInt((e.target as HTMLInputElement).value) || 0)}
                     class="input"
                     required
                   />
@@ -297,7 +320,7 @@
                     step="0.01"
                     min="0.01"
                     bind:value={item.price}
-                    on:input={(e) => updateItem(index, 'price', parseFloat(e.target.value) || 0)}
+                    on:input={(e) => updateItem(index, 'price', parseFloat((e.target as HTMLInputElement).value) || 0)}
                     class="input"
                     required
                   />
@@ -438,6 +461,7 @@
                 rows="3"
                 class="input"
                 placeholder={$_('sales.notesPlaceholder')}
+                dir={$locale === 'ar' ? 'rtl' : 'ltr'}
               ></textarea>
             </div>
           </div>
@@ -468,7 +492,8 @@
     <input type="hidden" name="items" value={JSON.stringify(items.map(item => ({
       productId: item.productId,
       quantity: item.quantity,
-      price: item.price
+      price: item.price,
+      weight: item.weight || 0
     })).filter(item => item.productId && item.quantity > 0 && item.price > 0))} />
   </form>
 </div>

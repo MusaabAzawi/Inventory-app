@@ -66,7 +66,7 @@
           Purchase Order #{purchase.invoiceNumber}
         </h1>
         <p class="text-gray-600 dark:text-gray-400 mt-1">
-          Created on {formatDate(purchase.createdAt)}
+          Created on {formatDate(purchase.createdAt.toString())}
         </p>
       </div>
     </div>
@@ -108,7 +108,7 @@
               <div>
                 <p class="text-sm text-gray-600 dark:text-gray-400">Purchase Date</p>
                 <p class="font-medium text-gray-900 dark:text-white">
-                  {formatDate(purchase.purchaseDate)}
+                  {formatDate(purchase.purchaseDate.toString())}
                 </p>
               </div>
             </div>
