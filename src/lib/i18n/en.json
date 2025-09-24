@@ -107,6 +107,7 @@
     "confirmPassword": "Confirm Password",
     "forgotPassword": "Forgot Password?",
     "loginButton": "Sign In",
+    "loggingIn": "Signing In",
     "registerButton": "Create Account",
     "invalidCredentials": "Invalid email or password",
     "emailRequired": "Email is required",

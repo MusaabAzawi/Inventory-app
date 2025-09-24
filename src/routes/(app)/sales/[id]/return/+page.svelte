@@ -24,19 +24,20 @@
   // Return items - track which items and quantities to return
   let returnItems: Array<{
     saleItemId: string;
+    productId: string;
     quantity: number;
     maxQuantity: number;
     price: number;
     product: any;
     selected: boolean;
   }> = data.sale.items.map(item => {
-    // Calculate how much of this item has already been returned
-    const existingReturns = data.sale.returns?.filter(ret => ret.saleItemId === item.id) || [];
-    const alreadyReturned = existingReturns.reduce((sum, ret) => sum + ret.quantity, 0);
-    const maxQuantity = item.quantity - alreadyReturned;
+    // Calculate how much has already been returned for this sale item
+    const alreadyReturnedQuantity = (item.returns || []).reduce((sum, ret) => sum + ret.quantity, 0);
+    const maxQuantity = item.quantity - alreadyReturnedQuantity;
 
     return {
       saleItemId: item.id,
+      productId: item.product.id,
       quantity: 0,
       maxQuantity,
       price: item.price,

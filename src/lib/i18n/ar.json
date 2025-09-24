@@ -107,6 +107,7 @@
     "confirmPassword": "تأكيد كلمة المرور",
     "forgotPassword": "نسيت كلمة المرور؟",
     "loginButton": "دخول",
+    "loggingIn": "جارِ تسجيل الدخول",
     "registerButton": "إنشاء حساب",
     "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
     "emailRequired": "البريد الإلكتروني مطلوب",

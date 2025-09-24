@@ -227,16 +227,16 @@
     </div>
   </div>
 
-  <form 
-    method="POST" 
+  <form
+    method="POST"
     use:enhance={handleSubmit}
-    on:submit|preventDefault={() => {
-      if (validateForm()) {
-        isSubmitting = true;
-        // Let the form submit naturally
-        return true;
+    on:submit={(e) => {
+      if (!validateForm()) {
+        e.preventDefault();
+        return false;
       }
-      return false;
+      isSubmitting = true;
+      return true;
     }}
     class="space-y-6"
   >

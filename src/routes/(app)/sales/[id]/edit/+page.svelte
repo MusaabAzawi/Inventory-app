@@ -36,6 +36,7 @@
     quantity: number;
     price: number;
     total: number;
+    discount: number;
     weight?: number;
     unitType?: 'piece' | 'kilo';
     product?: any;
@@ -44,7 +45,9 @@
     quantity: item.quantity,
     price: item.price,
     total: item.total,
+    discount: item.discount || 0,
     weight: item.weight || 0,
+    unitType: (item.weight && item.weight > 0) ? 'kilo' : 'piece',
     product: item.product
   }));
 
@@ -58,6 +61,7 @@
       quantity: 1,
       price: 0,
       total: 0,
+      discount: 0,
       weight: 0,
       unitType: 'piece'
     }];
@@ -109,13 +113,13 @@
     return async ({ result, update }) => {
       isSubmitting = false;
 
-      if (result.type === 'failure') {
-        notifications.error($_('sales.saleFailed'), result.data?.error || $_('sales.failedToUpdate'));
-        await update();
-      } else if (result.type === 'redirect') {
+      if (result.type === 'redirect') {
         notifications.success($_('sales.saleUpdated'), $_('sales.saleUpdatedMessage'));
         // Let redirect happen naturally
         return;
+      } else if (result.type === 'failure') {
+        notifications.error($_('sales.saleFailed'), result.data?.error || $_('sales.failedToUpdate'));
+        await update();
       } else {
         notifications.success($_('sales.saleUpdated'), $_('sales.saleUpdatedMessage'));
         await update();

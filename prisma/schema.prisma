@@ -1,4 +1,3 @@
-// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,44 +8,40 @@ datasource db {
 }
 
 model User {
-  id                String    @id @default(cuid())
-  email             String    @unique
+  id                String             @id @default(cuid())
+  email             String             @unique
   password          String
   name              String
-  role              String    @default("EMPLOYEE")
-  preferredLanguage String    @default("ar")
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  
-  // Relations
-  sales             Sale[]
-  purchases         Purchase[]
-  inventoryHistory  InventoryHistory[]
+  role              String             @default("EMPLOYEE")
+  preferredLanguage String             @default("ar")
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
   cashTransactions  CashTransaction[]
+  inventoryHistory  InventoryHistory[]
+  purchases         Purchase[]
+  sales             Sale[]
 }
 
 model Product {
-  id           String   @id @default(cuid())
-  nameEn       String
-  nameAr       String
-  sku          String   @unique
-  barcode      String?  @unique
-  quantity     Int      @default(0)
-  minQuantity  Int      @default(5)
-  costPrice    Float
-  sellingPrice Float
-  categoryId   String?
-  location     String?
-  expiryDate   DateTime?
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
-  // Relations
-  category         Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  saleItems        SaleItem[]
-  purchaseItems    PurchaseItem[]
+  id               String             @id @default(cuid())
+  nameEn           String
+  nameAr           String
+  sku              String             @unique
+  barcode          String?            @unique
+  quantity         Int                @default(0)
+  minQuantity      Int                @default(5)
+  costPrice        Float
+  sellingPrice     Float
+  categoryId       String?
+  location         String?
+  isActive         Boolean            @default(true)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  expiryDate       DateTime?
   inventoryHistory InventoryHistory[]
+  category         Category?          @relation(fields: [categoryId], references: [id])
+  purchaseItems    PurchaseItem[]
+  saleItems        SaleItem[]
 }
 
 model Category {
@@ -58,8 +53,6 @@ model Category {
   isActive      Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  
-  // Relations
   products      Product[]
 }
 
@@ -73,23 +66,19 @@ model Customer {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  // Relations
   sales     Sale[]
 }
 
 model Supplier {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   nameEn    String
   nameAr    String
   phone     String?
-  email     String?  @unique
+  email     String?    @unique
   address   String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   purchases Purchase[]
 }
 
@@ -102,17 +91,15 @@ model Sale {
   discount      Float      @default(0)
   tax           Float      @default(0)
   netAmount     Float
-  paymentMethod String     @default("CASH") // CASH, CREDIT, CARD
-  status        String     @default("COMPLETED") // COMPLETED, PENDING, CANCELLED
+  paymentMethod String     @default("CASH")
+  status        String     @default("COMPLETED")
   notes         String?
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
-  
-  // Relations
-  customer      Customer?  @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  returns       Return[]
+  customer      Customer?  @relation(fields: [customerId], references: [id])
   user          User       @relation(fields: [userId], references: [id])
   items         SaleItem[]
-  returns       Return[]
 }
 
 model SaleItem {
@@ -123,10 +110,10 @@ model SaleItem {
   price     Float
   total     Float
   discount  Float    @default(0)
-  
-  // Relations
-  sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  weight    Float?   // Weight in kilograms for food items
   product   Product  @relation(fields: [productId], references: [id])
+  sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  returns   Return[]
 }
 
 model Purchase {
@@ -138,14 +125,12 @@ model Purchase {
   discount      Float          @default(0)
   tax           Float          @default(0)
   netAmount     Float
-  status        String         @default("COMPLETED") // COMPLETED, PENDING, CANCELLED
+  status        String         @default("COMPLETED")
   notes         String?
   purchaseDate  DateTime       @default(now())
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
-  
-  // Relations
-  supplier      Supplier?      @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  supplier      Supplier?      @relation(fields: [supplierId], references: [id])
   user          User           @relation(fields: [userId], references: [id])
   items         PurchaseItem[]
 }
@@ -158,63 +143,56 @@ model PurchaseItem {
   price      Float
   total      Float
   discount   Float    @default(0)
-  weight     Float?   // Weight in kilograms for food items
-  
-  // Relations
-  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
   product    Product  @relation(fields: [productId], references: [id])
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
 }
 
 model Return {
-  id        String   @id @default(cuid())
-  saleId    String
-  reason    String?
-  amount    Float    @default(0)
-  quantity  Int      @default(0)
-  status    String   @default("PENDING") // PENDING, COMPLETED, CANCELLED
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
-  sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  id         String    @id @default(cuid())
+  saleId     String
+  saleItemId String
+  reason     String?
+  amount     Float     @default(0)
+  quantity   Int       @default(0)
+  status     String    @default("PENDING")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  sale       Sale      @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  saleItem   SaleItem  @relation(fields: [saleItemId], references: [id], onDelete: Cascade)
 }
 
 model InventoryHistory {
   id               String   @id @default(cuid())
   productId        String
   userId           String
-  action           String   // INITIAL_STOCK, SALE, PURCHASE, ADJUSTMENT, RETURN
+  action           String
   previousQuantity Int
   newQuantity      Int
-  quantityChange   Int      // newQuantity - previousQuantity
+  quantityChange   Int
   reason           String?
-  referenceId      String?  // Reference to sale/purchase/etc
+  referenceId      String?
   timestamp        DateTime @default(now())
-  
-  // Relations
   product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   user             User     @relation(fields: [userId], references: [id])
 }
 
 model CashTransaction {
-  id               String   @id @default(cuid())
-  type             String   // RECEIPT, PAYMENT, SALARY, EXPENSE, TRANSFER
-  amount           Float
-  currency         String   @default("IQD")
-  exchangeRate     Float    @default(1.0)
-  description      String?
-  referenceId      String?  // Reference to sale/purchase/etc
-  userId           String
-  employeeId       String?  // For salary payments
-  expenseCategoryId String? // For expense payments
-  status           String   @default("COMPLETED") // COMPLETED, PENDING, CANCELLED
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  
-  // Relations
-  user            User             @relation(fields: [userId], references: [id])
-  employee        Employee?        @relation(fields: [employeeId], references: [id], onDelete: SetNull)
-  expenseCategory ExpenseCategory? @relation(fields: [expenseCategoryId], references: [id], onDelete: SetNull)
+  id                String           @id @default(cuid())
+  type              String
+  amount            Float
+  currency          String           @default("IQD")
+  exchangeRate      Float            @default(1.0)
+  description       String?
+  referenceId       String?
+  userId            String
+  status            String           @default("COMPLETED")
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  employeeId        String?
+  expenseCategoryId String?
+  employee          Employee?        @relation(fields: [employeeId], references: [id])
+  expenseCategory   ExpenseCategory? @relation(fields: [expenseCategoryId], references: [id])
+  user              User             @relation(fields: [userId], references: [id])
 }
 
 model Agent {
@@ -223,7 +201,7 @@ model Agent {
   nameAr     String
   phone      String?
   email      String?  @unique
-  commission Float    @default(0) // Percentage
+  commission Float    @default(0)
   isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -233,65 +211,57 @@ model Settings {
   id        String   @id @default(cuid())
   key       String   @unique
   value     String
-  type      String   @default("STRING") // STRING, NUMBER, BOOLEAN, JSON
+  type      String   @default("STRING")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Employee {
-  id        String   @id @default(cuid())
-  nameEn    String
-  nameAr    String
-  email     String?  @unique
-  phone     String?
-  position  String?
-  salary    Float?
-  hireDate  DateTime @default(now())
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
+  id               String            @id @default(cuid())
+  nameEn           String
+  nameAr           String
+  email            String?           @unique
+  phone            String?
+  position         String?
+  salary           Float?
+  hireDate         DateTime          @default(now())
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
   cashTransactions CashTransaction[]
 }
 
 model ExpenseCategory {
-  id        String   @id @default(cuid())
-  nameEn    String   @unique
-  nameAr    String   @unique
-  isSystem  Boolean  @default(true) // System categories cannot be modified
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
+  id               String            @id @default(cuid())
+  nameEn           String            @unique
+  nameAr           String            @unique
+  isSystem         Boolean           @default(true)
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
   cashTransactions CashTransaction[]
 }
 
 model AccountType {
-  id        String   @id @default(cuid())
-  nameEn    String   @unique
-  nameAr    String   @unique
-  code      String   @unique // For accounting codes
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations  
+  id        String    @id @default(cuid())
+  nameEn    String    @unique
+  nameAr    String    @unique
+  code      String    @unique
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   accounts  Account[]
 }
 
 model Account {
-  id          String   @id @default(cuid())
-  nameEn      String
-  nameAr      String
+  id            String      @id @default(cuid())
+  nameEn        String
+  nameAr        String
   accountTypeId String
-  balance     Float    @default(0)
-  currency    String   @default("IQD")
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Relations
-  accountType AccountType @relation(fields: [accountTypeId], references: [id])
+  balance       Float       @default(0)
+  currency      String      @default("IQD")
+  isActive      Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  accountType   AccountType @relation(fields: [accountTypeId], references: [id])
 }

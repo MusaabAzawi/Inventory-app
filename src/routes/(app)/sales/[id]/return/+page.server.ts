@@ -29,6 +29,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
                   }
                 }
               }
+            },
+            returns: {
+              where: {
+                status: 'COMPLETED'
+              }
             }
           },
           orderBy: { id: 'asc' }
@@ -131,18 +136,13 @@ export const actions: Actions = {
             throw new Error(`Sale item ${returnItem.saleItemId} not found`);
           }
 
-          // Check if return quantity exceeds available quantity (considering previous returns)
-          const existingReturns = await tx.return.findMany({
-            where: { saleId: saleId }
-          });
+          // Calculate how much has already been returned for this sale item
+          const alreadyReturnedQuantity = originalItem.returns?.reduce((sum, ret) => sum + ret.quantity, 0) || 0;
+          const availableForReturn = originalItem.quantity - alreadyReturnedQuantity;
 
-          // Calculate total returned quantity for this product across all returns
-          const totalReturnedQuantity = existingReturns.reduce((sum, ret) => sum + ret.quantity, 0);
-
-          // For simplicity, we'll check against the total sale quantity
-          // In a more complex system, you'd track returns per item
-          if (returnItem.quantity > originalItem.quantity) {
-            throw new Error(`Cannot return ${returnItem.quantity} items. Original quantity was ${originalItem.quantity}.`);
+          // Check if return quantity exceeds available quantity
+          if (returnItem.quantity > availableForReturn) {
+            throw new Error(`Cannot return ${returnItem.quantity} items. Only ${availableForReturn} items available for return (original: ${originalItem.quantity}, already returned: ${alreadyReturnedQuantity}).`);
           }
 
           // Calculate return amount for this item
@@ -153,6 +153,7 @@ export const actions: Actions = {
           await tx.return.create({
             data: {
               saleId,
+              saleItemId: returnItem.saleItemId,
               reason,
               amount: returnAmount,
               quantity: returnItem.quantity,
