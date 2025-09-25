@@ -2,6 +2,8 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
   import { locale } from 'svelte-i18n';
+  import { onMount } from 'svelte';
+  import { notifications } from '$lib/stores/notifications';
   import {
     ArrowLeft,
     Edit,
@@ -21,6 +23,36 @@
   export let data: PageData;
 
   $: sale = data.sale;
+
+  // Check for flash messages from server
+  onMount(() => {
+    if (data.flash) {
+      const { type, title, message } = data.flash;
+      if (type === 'success') {
+        notifications.success(title, message);
+      } else if (type === 'error') {
+        notifications.error(title, message);
+      } else if (type === 'warning') {
+        notifications.warning(title, message);
+      } else if (type === 'info') {
+        notifications.info(title, message);
+      }
+    }
+
+    // Also check sessionStorage as fallback
+    if (typeof window !== 'undefined') {
+      const returnSuccess = sessionStorage.getItem('return_success');
+      if (returnSuccess) {
+        try {
+          const { title, message } = JSON.parse(returnSuccess);
+          notifications.success(title, message);
+        } catch (e) {
+          // Ignore parse errors
+        }
+        sessionStorage.removeItem('return_success');
+      }
+    }
+  });
 
   function formatDate(date: string) {
     return new Date(date).toLocaleDateString($locale === 'ar' ? 'ar-SA' : 'en-US', {

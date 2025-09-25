@@ -134,16 +134,29 @@
   function handleSubmit() {
     return async ({ result, update }) => {
       isSubmitting = false;
-      
-      if (result.type === 'success') {
-        notifications.success($_('purchases.purchaseCreated'), $_('purchases.purchaseCreatedMessage'));
+
+      console.log('Form submission result:', result);
+
+      if (result.type === 'redirect') {
+        // Store success message in sessionStorage to show after redirect
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('purchase_success', JSON.stringify({
+            title: $_('purchases.purchaseCreated'),
+            message: $_('purchases.purchaseCreatedMessage')
+          }));
+        }
+        // Let SvelteKit handle the redirect
+        return;
       } else if (result.type === 'failure') {
-        notifications.error($_('purchases.purchaseFailed'), result.data?.error || $_('purchases.failedToCreate'));
+        const errorMessage = result.data?.error || $_('purchases.failedToCreate');
+        console.error('Purchase creation failed:', errorMessage);
+        notifications.error($_('purchases.purchaseFailed'), errorMessage);
         // Update the form to show errors
         await update();
-      } else if (result.type === 'redirect') {
-        notifications.success($_('purchases.purchaseCreated'), $_('purchases.purchaseCreatedMessage'));
-        // Redirect will happen automatically
+      } else if (result.type === 'error') {
+        console.error('Purchase creation error:', result);
+        notifications.error($_('purchases.purchaseFailed'), $_('purchases.failedToCreate'));
+        await update();
       }
     };
   }
@@ -235,6 +248,24 @@
         e.preventDefault();
         return false;
       }
+
+      // Debug: Log the form data being submitted
+      const debugItems = items.map(item => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        price: item.price,
+        weight: item.weight || 0
+      })).filter(item => item.productId && item.quantity > 0 && item.price > 0);
+
+      console.log('Submitting purchase with data:', {
+        supplierId: purchaseData.supplierId,
+        discount: purchaseData.discount,
+        tax: purchaseData.tax,
+        purchaseDate: purchaseData.purchaseDate,
+        notes: purchaseData.notes,
+        items: debugItems
+      });
+
       isSubmitting = true;
       return true;
     }}

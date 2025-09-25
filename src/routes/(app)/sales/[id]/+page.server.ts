@@ -2,8 +2,11 @@
 import type { PageServerLoad } from './$types';
 import { error } from '@sveltejs/kit';
 import { prisma } from '$lib/server/db';
+import { getFlash } from '$lib/server/flash';
 
-export const load: PageServerLoad = async ({ params, locals }) => {
+export const load: PageServerLoad = async ({ params, locals, cookies }) => {
+  // Get any flash messages
+  const flash = getFlash(cookies);
   if (!locals.user) {
     throw error(401, 'Unauthorized');
   }
@@ -54,7 +57,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
       throw error(404, 'Sale not found');
     }
 
-    return { sale };
+    return { sale, flash };
   } catch (err) {
     if (err && typeof err === 'object' && 'status' in err) {
       throw err;

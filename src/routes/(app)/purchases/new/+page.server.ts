@@ -2,6 +2,7 @@
 import type { Actions, PageServerLoad } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
 import { prisma } from '$lib/server/db';
+import { setFlash } from '$lib/server/flash';
 import { z } from 'zod';
 
 const purchaseItemSchema = z.object({
@@ -85,23 +86,32 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
-  default: async ({ request, locals }) => {
+  default: async ({ request, locals, cookies }) => {
     if (!locals.user) {
       return fail(401, { error: 'Unauthorized' });
     }
 
     try {
       const formData = await request.formData();
-      
+
+      console.log('Received form data entries:');
+      for (const [key, value] of formData.entries()) {
+        console.log(`  ${key}:`, value);
+      }
+
       // Parse and validate items
       let itemsData;
       try {
         const itemsString = formData.get('items')?.toString();
         if (!itemsString) {
+          console.error('No items string in form data');
           return fail(400, { error: 'No items provided' });
         }
+        console.log('Items string:', itemsString);
         itemsData = JSON.parse(itemsString);
+        console.log('Parsed items data:', itemsData);
       } catch (parseError) {
+        console.error('Failed to parse items:', parseError);
         return fail(400, { error: 'Invalid items data format' });
       }
 
@@ -245,17 +255,28 @@ export const actions: Actions = {
         return newPurchase;
       });
 
+      // Set flash message for success
+      setFlash(cookies, {
+        type: 'success',
+        title: 'Purchase Created',
+        message: `Purchase order ${invoiceNumber} has been created successfully.`
+      });
+
       // Success - redirect to purchases list
-      throw redirect(302, '/purchases');
+      throw redirect(303, '/purchases');
       
     } catch (error) {
       // Handle redirect separately - don't treat it as an error
-      if (error && typeof error === 'object' && 'status' in error && error.status === 302) {
+      if (error && typeof error === 'object' && 'status' in error && (error.status === 302 || error.status === 303)) {
         throw error; // Re-throw redirect
       }
 
-      console.error('Purchase creation error:', error);
-      
+      console.error('Purchase creation error:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        code: error && typeof error === 'object' && 'code' in error ? error.code : undefined,
+        stack: error instanceof Error ? error.stack : undefined
+      });
+
       // Handle specific database errors
       if (error && typeof error === 'object' && 'code' in error) {
         switch (error.code) {

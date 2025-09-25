@@ -1,13 +1,17 @@
 // src/routes/(app)/purchases/+page.server.ts
 import type { PageServerLoad } from './$types';
 import { prisma } from '$lib/server/db';
+import { getFlash } from '$lib/server/flash';
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals, cookies }) => {
+  // Get any flash messages
+  const flash = getFlash(cookies);
   if (!locals.user) {
     return {
       purchases: [],
       suppliers: [],
-      stats: null
+      stats: null,
+      flash
     };
   }
 
@@ -92,14 +96,16 @@ export const load: PageServerLoad = async ({ locals }) => {
           amount: monthlyStats._sum.netAmount || 0,
           count: monthlyStats._count
         }
-      }
+      },
+      flash
     };
   } catch (error) {
     console.error('Error loading purchases data:', error);
     return {
       purchases: [],
       suppliers: [],
-      stats: null
+      stats: null,
+      flash
     };
   }
 };

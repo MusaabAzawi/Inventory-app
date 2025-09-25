@@ -80,16 +80,26 @@
     return async ({ result, update }) => {
       isSubmitting = false;
 
-      if (result.type === 'failure') {
-        notifications.error($_('sales.returnFailed'), result.data?.error || $_('sales.failedToProcessReturn'));
-        await update();
-      } else if (result.type === 'redirect') {
-        notifications.success($_('sales.returnProcessed'), $_('sales.returnProcessedMessage'));
-        // Let redirect happen naturally
+      console.log('Return form submission result:', result);
+
+      if (result.type === 'redirect') {
+        // Store success message in sessionStorage to show after redirect
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('return_success', JSON.stringify({
+            title: $_('sales.returnProcessed'),
+            message: $_('sales.returnProcessedMessage')
+          }));
+        }
+        // Let SvelteKit handle the redirect
         return;
-      } else {
-        // For other success cases
-        notifications.success($_('sales.returnProcessed'), $_('sales.returnProcessedMessage'));
+      } else if (result.type === 'failure') {
+        const errorMessage = result.data?.error || $_('sales.failedToProcessReturn');
+        console.error('Return processing failed:', errorMessage);
+        notifications.error($_('sales.returnFailed'), errorMessage);
+        await update();
+      } else if (result.type === 'error') {
+        console.error('Return processing error:', result);
+        notifications.error($_('sales.returnFailed'), $_('sales.failedToProcessReturn'));
         await update();
       }
     };

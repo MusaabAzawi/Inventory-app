@@ -2,21 +2,53 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
   import { locale } from 'svelte-i18n';
-  import { 
-    Plus, 
-    ShoppingBag, 
-    DollarSign, 
-    TrendingDown, 
-    Eye, 
-    Edit, 
+  import { onMount } from 'svelte';
+  import {
+    Plus,
+    ShoppingBag,
+    DollarSign,
+    TrendingDown,
+    Eye,
+    Edit,
     Truck,
     Calendar,
     Package
   } from 'lucide-svelte';
   import DataTable from '$lib/components/ui/DataTable.svelte';
+  import { notifications } from '$lib/stores/notifications';
   import type { PageData } from './$types';
-  
+
   export let data: PageData;
+
+  // Check for flash messages from server
+  onMount(() => {
+    if (data.flash) {
+      const { type, title, message } = data.flash;
+      if (type === 'success') {
+        notifications.success(title, message);
+      } else if (type === 'error') {
+        notifications.error(title, message);
+      } else if (type === 'warning') {
+        notifications.warning(title, message);
+      } else if (type === 'info') {
+        notifications.info(title, message);
+      }
+    }
+
+    // Also check sessionStorage as fallback
+    if (typeof window !== 'undefined') {
+      const successMessage = sessionStorage.getItem('purchase_success');
+      if (successMessage) {
+        try {
+          const { title, message } = JSON.parse(successMessage);
+          notifications.success(title, message);
+        } catch (e) {
+          // Ignore parse errors
+        }
+        sessionStorage.removeItem('purchase_success');
+      }
+    }
+  });
 
   $: columns = [
     { key: 'invoiceNumber', label: $_('sales.invoiceNumber'), sortable: true },

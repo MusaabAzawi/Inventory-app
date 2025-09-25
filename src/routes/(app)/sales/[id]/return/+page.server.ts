@@ -2,6 +2,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { error, redirect, fail } from '@sveltejs/kit';
 import { prisma } from '$lib/server/db';
+import { setFlash } from '$lib/server/flash';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
   if (!locals.user) {
@@ -68,7 +69,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 };
 
 export const actions: Actions = {
-  default: async ({ request, params, locals }) => {
+  default: async ({ request, params, locals, cookies }) => {
     if (!locals.user) {
       throw error(401, 'Unauthorized');
     }
@@ -77,16 +78,25 @@ export const actions: Actions = {
     const formData = await request.formData();
 
     try {
+      console.log('Processing return for sale:', saleId);
+
       const reason = formData.get('reason') as string;
       const returnItemsJson = formData.get('returnItems') as string;
 
+      console.log('Return data received:', {
+        reason,
+        returnItemsJson
+      });
+
       if (!reason || !returnItemsJson) {
+        console.error('Missing required fields');
         return fail(400, {
           error: 'Reason and return items are required'
         });
       }
 
       const returnItems = JSON.parse(returnItemsJson);
+      console.log('Parsed return items:', returnItems);
 
       if (!Array.isArray(returnItems) || returnItems.length === 0) {
         return fail(400, {
@@ -108,11 +118,19 @@ export const actions: Actions = {
 
       // Process return in transaction
       await prisma.$transaction(async (tx) => {
-        // Verify sale exists and get original items
+        // Verify sale exists and get original items with their returns
         const sale = await tx.sale.findUnique({
           where: { id: saleId },
           include: {
-            items: true
+            items: {
+              include: {
+                returns: {
+                  where: {
+                    status: 'COMPLETED'
+                  }
+                }
+              }
+            }
           }
         });
 
@@ -137,7 +155,7 @@ export const actions: Actions = {
           }
 
           // Calculate how much has already been returned for this sale item
-          const alreadyReturnedQuantity = originalItem.returns?.reduce((sum, ret) => sum + ret.quantity, 0) || 0;
+          const alreadyReturnedQuantity = originalItem.returns ? originalItem.returns.reduce((sum, ret) => sum + ret.quantity, 0) : 0;
           const availableForReturn = originalItem.quantity - alreadyReturnedQuantity;
 
           // Check if return quantity exceeds available quantity
@@ -207,15 +225,27 @@ export const actions: Actions = {
         });
       });
 
+      // Set success flash message
+      setFlash(cookies, {
+        type: 'success',
+        title: 'Return Processed Successfully',
+        message: `Return has been processed. Total refund amount: $${totalReturnAmount.toFixed(2)}`
+      });
+
       throw redirect(303, `/sales/${saleId}`);
     } catch (err) {
-      if (err && typeof err === 'object' && 'status' in err) {
+      // Handle redirect separately
+      if (err && typeof err === 'object' && 'status' in err && (err.status === 302 || err.status === 303)) {
         throw err;
       }
 
-      console.error('Error processing return:', err);
+      console.error('Error processing return:', {
+        message: err instanceof Error ? err.message : 'Unknown error',
+        stack: err instanceof Error ? err.stack : undefined
+      });
+
       return fail(500, {
-        error: typeof err === 'object' && err && 'message' in err ? err.message : 'Failed to process return'
+        error: err instanceof Error ? err.message : 'Failed to process return'
       });
     }
   }
