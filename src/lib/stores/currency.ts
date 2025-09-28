@@ -8,7 +8,7 @@ interface CurrencyState {
   lastUpdated: Date | null;
 }
 
-const DEFAULT_CURRENCY = 'USD';
+const DEFAULT_CURRENCY = 'IQD';
 
 function createCurrencyStore() {
   // Initialize state from localStorage or defaults
@@ -23,11 +23,22 @@ function createCurrencyStore() {
 
   // Load from localStorage if available
   if (browser) {
+    // First check for defaultCurrency setting
+    const defaultCurrency = localStorage.getItem('defaultCurrency');
+    if (defaultCurrency) {
+      initialState.selectedCurrency = defaultCurrency;
+    }
+
+    // Then load full currency store if available
     const stored = localStorage.getItem('currency-store');
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
         Object.assign(initialState, parsed);
+        // Ensure defaultCurrency takes precedence
+        if (defaultCurrency) {
+          initialState.selectedCurrency = defaultCurrency;
+        }
       } catch (e) {
         console.warn('Failed to parse stored currency data');
       }

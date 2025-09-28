@@ -28,7 +28,9 @@
     sellingPrice: form?.sellingPrice ?? product?.sellingPrice ?? 0,
     categoryId: form?.categoryId ?? product?.categoryId ?? '',
     location: form?.location ?? product?.location ?? '',
-    expiryDate: form?.expiryDate ?? (product?.expiryDate ? new Date(product.expiryDate).toISOString().split('T')[0] : '')
+    expiryDate: form?.expiryDate ?? (product?.expiryDate ? new Date(product.expiryDate).toISOString().split('T')[0] : ''),
+    weight: form?.weight ?? product?.weight ?? 0,
+    unit: form?.unit ?? product?.unit ?? 'kg'
   };
 
   // Update formData when form prop changes (for server-side validation errors)
@@ -44,7 +46,9 @@
       sellingPrice: form?.sellingPrice ?? product?.sellingPrice ?? 0,
       categoryId: form?.categoryId ?? product?.categoryId ?? '',
       location: form?.location ?? product?.location ?? '',
-      expiryDate: form?.expiryDate ?? (product?.expiryDate ? new Date(product.expiryDate).toISOString().split('T')[0] : '')
+      expiryDate: form?.expiryDate ?? (product?.expiryDate ? new Date(product.expiryDate).toISOString().split('T')[0] : ''),
+      weight: form?.weight ?? product?.weight ?? 0,
+      unit: form?.unit ?? product?.unit ?? 'kg'
     };
   }
 
@@ -297,7 +301,7 @@
     <!-- Quantity -->
     <div>
       <label for="quantity" class="label">
-        {$_('product.quantity')} <span class="text-red-500">*</span>
+        {$_('product.quantity')} {isFoodCategory ? '(pieces)' : ''} <span class="text-red-500">*</span>
       </label>
       <input
         id="quantity"
@@ -309,6 +313,33 @@
         bind:value={formData.quantity}
       />
     </div>
+
+    <!-- Weight for Food Category -->
+    {#if isFoodCategory}
+      <div>
+        <label for="weight" class="label">
+          Weight (kg) per unit
+        </label>
+        <div class="flex gap-2">
+          <input
+            id="weight"
+            name="weight"
+            type="number"
+            step="0.001"
+            min="0"
+            class="input flex-1"
+            bind:value={formData.weight}
+            placeholder="0.000"
+          />
+          <span class="flex items-center px-3 bg-gray-100 border border-gray-300 rounded-md text-gray-600 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400">
+            kg
+          </span>
+        </div>
+        <p class="text-sm text-gray-500 mt-1">
+          Specify the weight per unit in kilograms (e.g., 0.5 kg per package)
+        </p>
+      </div>
+    {/if}
 
     <!-- Minimum Quantity -->
     <div>
@@ -378,6 +409,12 @@
         </span>
       </div>
     </div>
+  {/if}
+
+  <!-- Hidden fields for food category -->
+  {#if isFoodCategory}
+    <input type="hidden" name="weight" value={formData.weight} />
+    <input type="hidden" name="unit" value={formData.unit} />
   {/if}
 
   <!-- Form Actions -->

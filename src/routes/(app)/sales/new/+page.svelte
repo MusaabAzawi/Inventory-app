@@ -14,8 +14,9 @@
     Calculator
   } from 'lucide-svelte';
   import BarcodeScanner from '$lib/components/barcode/BarcodeScanner.svelte';
+  import { currentCurrency } from '$lib/stores/currency';
   import type { PageData, ActionData } from './$types';
-  
+
   export let data: PageData;
   export let form: ActionData;
   
@@ -434,7 +435,7 @@
             <!-- Net Amount -->
             <div class="flex justify-between text-lg font-semibold border-t pt-4">
               <span>{$_('sales.netAmount')}:</span>
-              <span class="text-green-600">${netAmount.toFixed(2)}</span>
+              <span class="text-green-600">{$currentCurrency.symbol}{netAmount.toFixed(2)}</span>
             </div>
 
             <!-- Payment Method -->

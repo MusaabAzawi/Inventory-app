@@ -4,24 +4,25 @@
   import { locale } from 'svelte-i18n';
   import { enhance } from '$app/forms';
   import { page } from '$app/stores';
-  import { 
-    ArrowDownCircle, 
-    DollarSign, 
-    FileText, 
+  import { currentCurrency } from '$lib/stores/currency';
+  import {
+    ArrowDownCircle,
+    DollarSign,
+    FileText,
     Calendar,
     ArrowLeft,
     Building,
     Receipt
   } from 'lucide-svelte';
   import type { PageData, ActionData } from './$types';
-  
+
   export let data: PageData;
   export let form: ActionData;
 
   let isSubmitting = false;
   let amount = '';
-  let currency = data.defaultCurrency || 'USD';
-  let exchangeRate = 1;
+  let currency = $currentCurrency.code;
+  let exchangeRate = $currentCurrency.exchangeRate || 1;
   let description = '';
   let referenceId = '';
   let paymentType = 'PAYMENT';
@@ -31,8 +32,8 @@
 
   function resetForm() {
     amount = '';
-    currency = data.defaultCurrency || 'USD';
-    exchangeRate = 1;
+    currency = $currentCurrency.code;
+    exchangeRate = $currentCurrency.exchangeRate || 1;
     description = '';
     referenceId = '';
     paymentType = 'PAYMENT';

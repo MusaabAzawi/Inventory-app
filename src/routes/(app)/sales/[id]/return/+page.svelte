@@ -230,7 +230,7 @@
                       <input
                         id="item-{index}"
                         type="checkbox"
-                        bind:checked={item.selected}
+                        checked={item.selected}
                         on:change={() => toggleItemSelection(index)}
                         class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
@@ -275,7 +275,7 @@
                         type="number"
                         min="0"
                         max={item.maxQuantity}
-                        bind:value={item.quantity}
+                        value={item.quantity}
                         on:input={(e) => updateQuantity(index, parseInt((e.target as HTMLInputElement).value) || 0)}
                         disabled={!item.selected}
                         class="input text-sm"

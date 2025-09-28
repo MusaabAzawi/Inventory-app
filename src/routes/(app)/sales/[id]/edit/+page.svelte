@@ -243,7 +243,7 @@
                   <label for="product-{index}" class="label">{$_('sales.product')}</label>
                   <select
                     id="product-{index}"
-                    bind:value={item.productId}
+                    value={item.productId}
                     on:change={(e) => updateItem(index, 'productId', (e.target as HTMLSelectElement).value)}
                     class="input text-sm"
                     required
@@ -265,7 +265,7 @@
                     id="quantity-{index}"
                     type="number"
                     min="1"
-                    bind:value={item.quantity}
+                    value={item.quantity}
                     on:input={(e) => updateItem(index, 'quantity', parseInt((e.target as HTMLInputElement).value) || 0)}
                     class="input"
                     required
@@ -283,7 +283,7 @@
                       type="number"
                       step="0.001"
                       min="0.001"
-                      bind:value={item.weight}
+                      value={item.weight}
                       on:input={(e) => updateItem(index, 'weight', parseFloat((e.target as HTMLInputElement).value) || 0)}
                       class="input"
                     />
@@ -298,7 +298,7 @@
                     type="number"
                     step="0.01"
                     min="0.01"
-                    bind:value={item.price}
+                    value={item.price}
                     on:input={(e) => updateItem(index, 'price', parseFloat((e.target as HTMLInputElement).value) || 0)}
                     class="input"
                     required

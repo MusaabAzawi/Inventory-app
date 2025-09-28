@@ -16,8 +16,9 @@
     Building
   } from 'lucide-svelte';
   import LanguageSwitcher from '$lib/components/layout/LanguageSwitcher.svelte';
+  import { currencyStore } from '$lib/stores/currency';
   import type { PageData } from './$types';
-  
+
   export let data: PageData = {};
 
   // Mock settings data - will be replaced with server data
@@ -50,9 +51,29 @@
   };
 
   function saveSettings() {
-    // Implement save functionality
+    // Save currency to the currency store
+    currencyStore.setCurrency(settings.defaultCurrency);
+
+    // Save to localStorage for persistence
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('defaultCurrency', settings.defaultCurrency);
+    }
+
+    // Show success notification
     alert($_('settings.settingsSaved'));
   }
+
+  // Load saved currency on mount
+  import { onMount } from 'svelte';
+  onMount(() => {
+    if (typeof window !== 'undefined') {
+      const savedCurrency = localStorage.getItem('defaultCurrency');
+      if (savedCurrency) {
+        settings.defaultCurrency = savedCurrency;
+        currencyStore.setCurrency(savedCurrency);
+      }
+    }
+  });
 </script>
 
 <div class="space-y-6">
