@@ -179,6 +179,38 @@
             {#if form?.fields?.employeeId}
               <p class="text-sm text-red-600 mt-1">{form.fields.employeeId[0]}</p>
             {/if}
+
+            {#if selectedEmployee}
+              <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div class="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span class="font-semibold text-gray-700">
+                      {$locale === 'ar' ? 'الراتب الأساسي:' : 'Base Salary:'}
+                    </span>
+                    <span class="text-gray-900">
+                      {selectedEmployee.salary ? formatCurrency(selectedEmployee.salary, 'IQD') : $_('common.notSet')}
+                    </span>
+                  </div>
+                  <div>
+                    <span class="font-semibold text-gray-700">
+                      {$locale === 'ar' ? 'الراتب المتبقي:' : 'Remaining Salary:'}
+                    </span>
+                    <span class="text-gray-900">
+                      {selectedEmployee.remainingSalary !== null && selectedEmployee.remainingSalary !== undefined
+                        ? formatCurrency(selectedEmployee.remainingSalary, 'IQD')
+                        : selectedEmployee.salary
+                          ? formatCurrency(selectedEmployee.salary, 'IQD')
+                          : $_('common.notSet')}
+                    </span>
+                  </div>
+                </div>
+                {#if selectedEmployee.lastPaymentDate}
+                  <div class="text-xs text-gray-600 mt-2">
+                    {$locale === 'ar' ? 'آخر دفعة:' : 'Last Payment:'} {new Date(selectedEmployee.lastPaymentDate).toLocaleDateString()}
+                  </div>
+                {/if}
+              </div>
+            {/if}
           </div>
 
           <div>

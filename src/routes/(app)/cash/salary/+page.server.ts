@@ -42,7 +42,9 @@ export const load: PageServerLoad = async ({ locals, request }) => {
         nameAr: true,
         email: true,
         position: true,
-        salary: true
+        salary: true,
+        remainingSalary: true,
+        lastPaymentDate: true
       },
       where: { isActive: true },
       orderBy: { nameEn: 'asc' }
@@ -108,18 +110,58 @@ export const actions: Actions = {
         return fail(400, { error: 'Employee not found' });
       }
 
-      await prisma.cashTransaction.create({
-        data: {
-          type: 'SALARY',
-          amount: validatedData.amount,
-          currency: validatedData.currency,
-          exchangeRate: validatedData.exchangeRate,
-          description: `${validatedData.salaryType} salary for ${employee.nameEn} - ${validatedData.salaryPeriod}: ${validatedData.description}`,
-          referenceId: validatedData.referenceId,
-          userId: locals.user.id,
-          employeeId: validatedData.employeeId,
-          status: 'COMPLETED'
-        }
+      // Initialize remaining salary if not set (first payment or new month)
+      let currentRemainingSalary = employee.remainingSalary;
+
+      // If it's a new month or no remaining salary is set, reset to full salary
+      const now = new Date();
+      const isNewMonth = !employee.lastPaymentDate ||
+        (employee.lastPaymentDate.getMonth() !== now.getMonth() ||
+         employee.lastPaymentDate.getFullYear() !== now.getFullYear());
+
+      if (isNewMonth && validatedData.salaryType === 'MONTHLY') {
+        // Reset to full salary for new month
+        currentRemainingSalary = employee.salary;
+      } else if (currentRemainingSalary === null || currentRemainingSalary === undefined) {
+        // If no remaining salary is set, use the full salary
+        currentRemainingSalary = employee.salary;
+      }
+
+      // Validate that the payment doesn't exceed remaining salary
+      if (currentRemainingSalary !== null && validatedData.amount > currentRemainingSalary) {
+        return fail(400, {
+          error: `Payment amount (${validatedData.amount} ${validatedData.currency}) exceeds remaining salary (${currentRemainingSalary} ${validatedData.currency})`
+        });
+      }
+
+      // Calculate new remaining salary
+      const newRemainingSalary = currentRemainingSalary !== null ? currentRemainingSalary - validatedData.amount : null;
+
+      // Create transaction and update employee in a database transaction
+      await prisma.$transaction(async (tx) => {
+        // Create the cash transaction
+        await tx.cashTransaction.create({
+          data: {
+            type: 'SALARY',
+            amount: validatedData.amount,
+            currency: validatedData.currency,
+            exchangeRate: validatedData.exchangeRate,
+            description: `${validatedData.salaryType} salary for ${employee.nameEn} - ${validatedData.salaryPeriod}: ${validatedData.description}`,
+            referenceId: validatedData.referenceId,
+            userId: locals.user.id,
+            employeeId: validatedData.employeeId,
+            status: 'COMPLETED'
+          }
+        });
+
+        // Update employee's remaining salary and last payment date
+        await tx.employee.update({
+          where: { id: validatedData.employeeId },
+          data: {
+            remainingSalary: newRemainingSalary,
+            lastPaymentDate: now
+          }
+        });
       });
 
       throw redirect(302, '/cash?success=salary_created');

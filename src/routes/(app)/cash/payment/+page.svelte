@@ -27,6 +27,7 @@
   let referenceId = '';
   let paymentType = 'PAYMENT';
   let supplierId = '';
+  let employeeId = '';
 
   $: formValid = amount && parseFloat(amount) > 0 && description.trim() && exchangeRate > 0;
 
@@ -38,9 +39,18 @@
     referenceId = '';
     paymentType = 'PAYMENT';
     supplierId = '';
+    employeeId = '';
   }
 
   function formatCurrency(value: number, curr: string = 'USD') {
+    if (curr === 'IQD') {
+      const formatted = new Intl.NumberFormat('ar-IQ', {
+        style: 'decimal',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(value);
+      return `${formatted} د.ع`;
+    }
     return new Intl.NumberFormat($locale === 'ar' ? 'ar-SA' : 'en-US', {
       style: 'currency',
       currency: curr
@@ -50,17 +60,21 @@
   $: convertedAmount = amount ? parseFloat(amount) * exchangeRate : 0;
   
   $: selectedSupplier = data.suppliers.find(s => s.id === supplierId);
+  $: selectedEmployee = data.employees?.find(e => e.id === employeeId);
 
   function updateDescription() {
     if (paymentType === 'PAYMENT' && selectedSupplier) {
       const supplierName = $locale === 'ar' ? selectedSupplier.nameAr : selectedSupplier.nameEn;
       description = `Payment to supplier: ${supplierName}`;
+    } else if (paymentType === 'EMPLOYEE_PAYMENT' && selectedEmployee) {
+      const employeeName = $locale === 'ar' ? selectedEmployee.nameAr : selectedEmployee.nameEn;
+      description = `Payment to employee: ${employeeName}`;
     } else if (paymentType === 'EXPENSE') {
       description = '';
     }
   }
 
-  $: if (paymentType && selectedSupplier) {
+  $: if (paymentType && (selectedSupplier || selectedEmployee)) {
     updateDescription();
   }
 </script>
@@ -172,6 +186,70 @@
               <p class="text-sm text-gray-500 mt-1">
                 {$_('cash.supplierHint')}
               </p>
+            {/if}
+          </div>
+        {/if}
+
+        <!-- Employee Selection (only for EMPLOYEE_PAYMENT type) -->
+        {#if paymentType === 'EMPLOYEE_PAYMENT'}
+          <div>
+            <label for="employeeId" class="label">
+              {$locale === 'ar' ? 'الموظف' : 'Employee'} *
+            </label>
+            <select
+              id="employeeId"
+              name="employeeId"
+              bind:value={employeeId}
+              class="input"
+              required={paymentType === 'EMPLOYEE_PAYMENT'}
+            >
+              <option value="">{$locale === 'ar' ? 'اختر الموظف' : 'Select Employee'}</option>
+              {#each data.employees || [] as employee}
+                <option value={employee.id}>
+                  {$locale === 'ar' ? employee.nameAr : employee.nameEn}
+                  {#if employee.position} - {employee.position}{/if}
+                </option>
+              {/each}
+            </select>
+
+            {#if selectedEmployee}
+              <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-900/20 dark:border-blue-700">
+                <div class="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span class="font-semibold text-gray-700 dark:text-gray-300">
+                      {$locale === 'ar' ? 'الراتب الأساسي:' : 'Base Salary:'}
+                    </span>
+                    <span class="text-gray-900 dark:text-gray-100">
+                      {selectedEmployee.salary ? formatCurrency(selectedEmployee.salary, 'IQD') : ($locale === 'ar' ? 'غير محدد' : 'Not Set')}
+                    </span>
+                  </div>
+                  <div>
+                    <span class="font-semibold text-gray-700 dark:text-gray-300">
+                      {$locale === 'ar' ? 'الراتب المتبقي:' : 'Remaining Salary:'}
+                    </span>
+                    <span class="text-gray-900 dark:text-gray-100">
+                      {selectedEmployee.remainingSalary !== null && selectedEmployee.remainingSalary !== undefined
+                        ? formatCurrency(selectedEmployee.remainingSalary, 'IQD')
+                        : selectedEmployee.salary
+                          ? formatCurrency(selectedEmployee.salary, 'IQD')
+                          : ($locale === 'ar' ? 'غير محدد' : 'Not Set')}
+                    </span>
+                  </div>
+                </div>
+                {#if selectedEmployee.lastPaymentDate}
+                  <div class="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                    {$locale === 'ar' ? 'آخر دفعة:' : 'Last Payment:'} {new Date(selectedEmployee.lastPaymentDate).toLocaleDateString()}
+                  </div>
+                {/if}
+
+                {#if selectedEmployee.remainingSalary !== null && amount && parseFloat(amount) > selectedEmployee.remainingSalary}
+                  <div class="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded dark:bg-yellow-900/20 dark:border-yellow-700">
+                    <p class="text-xs text-yellow-800 dark:text-yellow-200">
+                      ⚠️ {$locale === 'ar' ? 'المبلغ المدخل يتجاوز الراتب المتبقي' : 'Amount exceeds remaining salary'}
+                    </p>
+                  </div>
+                {/if}
+              </div>
             {/if}
           </div>
         {/if}
@@ -318,6 +396,14 @@
                   </span>
                 </div>
               {/if}
+              {#if paymentType === 'EMPLOYEE_PAYMENT' && selectedEmployee}
+                <div class="flex justify-between text-sm">
+                  <span class="text-red-700 dark:text-red-300">{$locale === 'ar' ? 'الموظف:' : 'Employee:'}:</span>
+                  <span class="font-medium text-red-900 dark:text-red-100">
+                    {$locale === 'ar' ? selectedEmployee.nameAr : selectedEmployee.nameEn}
+                  </span>
+                </div>
+              {/if}
               <div class="flex justify-between text-sm">
                 <span class="text-red-700 dark:text-red-300">{$_('cash.originalAmount')}:</span>
                 <span class="font-medium text-red-900 dark:text-red-100">
@@ -340,7 +426,7 @@
         <div class="flex flex-col sm:flex-row gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
           <button
             type="submit"
-            disabled={!formValid || isSubmitting || (paymentType === 'PAYMENT' && !supplierId)}
+            disabled={!formValid || isSubmitting || (paymentType === 'PAYMENT' && !supplierId) || (paymentType === 'EMPLOYEE_PAYMENT' && !employeeId)}
             class="btn-primary btn-md flex-1 sm:flex-none sm:w-auto"
           >
             {#if isSubmitting}

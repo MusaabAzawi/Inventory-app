@@ -225,6 +225,8 @@ model Employee {
   phone            String?
   position         String?
   salary           Float?
+  remainingSalary  Float?            // Track remaining salary after partial payments
+  lastPaymentDate  DateTime?         // Track when the last payment was made
   hireDate         DateTime          @default(now())
   isActive         Boolean           @default(true)
   createdAt        DateTime          @default(now())

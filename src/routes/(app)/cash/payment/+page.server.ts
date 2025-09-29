@@ -9,7 +9,8 @@ const paymentSchema = z.object({
   exchangeRate: z.number().positive(),
   description: z.string().min(1),
   referenceId: z.string().optional(),
-  paymentType: z.enum(['PAYMENT', 'EXPENSE']),
+  paymentType: z.enum(['PAYMENT', 'EXPENSE', 'EMPLOYEE_PAYMENT']),
+  employeeId: z.string().optional(),
 });
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -18,12 +19,13 @@ export const load: PageServerLoad = async ({ locals }) => {
   }
 
   try {
-    const currencies = ['USD', 'SAR', 'AED', 'EUR'];
+    const currencies = ['USD', 'SAR', 'AED', 'EUR', 'IQD'];
     const paymentTypes = [
       { id: 'PAYMENT', label: 'Supplier Payment' },
-      { id: 'EXPENSE', label: 'General Expense' }
+      { id: 'EXPENSE', label: 'General Expense' },
+      { id: 'EMPLOYEE_PAYMENT', label: 'Employee Payment' }
     ];
-    
+
     // Get suppliers for payment references
     const suppliers = await prisma.supplier.findMany({
       where: { isActive: true },
@@ -34,12 +36,28 @@ export const load: PageServerLoad = async ({ locals }) => {
       },
       orderBy: { nameEn: 'asc' }
     });
-    
+
+    // Get employees with their remaining salary for employee payments
+    const employees = await prisma.employee.findMany({
+      where: { isActive: true },
+      select: {
+        id: true,
+        nameEn: true,
+        nameAr: true,
+        position: true,
+        salary: true,
+        remainingSalary: true,
+        lastPaymentDate: true
+      },
+      orderBy: { nameEn: 'asc' }
+    });
+
     return {
       currencies,
       defaultCurrency: 'USD',
       paymentTypes,
-      suppliers
+      suppliers,
+      employees
     };
   } catch (error) {
     console.error('Error loading payment page:', error);
@@ -48,9 +66,11 @@ export const load: PageServerLoad = async ({ locals }) => {
       defaultCurrency: 'USD',
       paymentTypes: [
         { id: 'PAYMENT', label: 'Supplier Payment' },
-        { id: 'EXPENSE', label: 'General Expense' }
+        { id: 'EXPENSE', label: 'General Expense' },
+        { id: 'EMPLOYEE_PAYMENT', label: 'Employee Payment' }
       ],
-      suppliers: []
+      suppliers: [],
+      employees: []
     };
   }
 };
@@ -68,7 +88,8 @@ export const actions: Actions = {
       const exchangeRate = parseFloat(formData.get('exchangeRate')?.toString() || '1');
       const description = formData.get('description')?.toString() || '';
       const referenceId = formData.get('referenceId')?.toString() || undefined;
-      const paymentType = formData.get('paymentType')?.toString() as 'PAYMENT' | 'EXPENSE' || 'PAYMENT';
+      const paymentType = formData.get('paymentType')?.toString() as 'PAYMENT' | 'EXPENSE' | 'EMPLOYEE_PAYMENT' || 'PAYMENT';
+      const employeeId = formData.get('employeeId')?.toString() || undefined;
 
       const validatedData = paymentSchema.parse({
         amount,
@@ -77,20 +98,69 @@ export const actions: Actions = {
         description,
         referenceId: referenceId || undefined,
         paymentType,
+        employeeId: employeeId || undefined,
       });
 
-      await prisma.cashTransaction.create({
-        data: {
-          type: validatedData.paymentType,
-          amount: validatedData.amount,
-          currency: validatedData.currency,
-          exchangeRate: validatedData.exchangeRate,
-          description: validatedData.description,
-          referenceId: validatedData.referenceId,
-          userId: locals.user.id,
-          status: 'COMPLETED'
+      // Handle employee payment
+      if (validatedData.paymentType === 'EMPLOYEE_PAYMENT' && validatedData.employeeId) {
+        const employee = await prisma.employee.findUnique({
+          where: { id: validatedData.employeeId }
+        });
+
+        if (!employee) {
+          return fail(400, { error: 'Employee not found' });
         }
-      });
+
+        // Check if payment exceeds remaining salary
+        const remainingSalary = employee.remainingSalary || employee.salary || 0;
+        if (validatedData.amount > remainingSalary) {
+          return fail(400, {
+            error: `Payment amount (${validatedData.amount} ${validatedData.currency}) exceeds remaining salary (${remainingSalary} ${validatedData.currency})`
+          });
+        }
+
+        // Create transaction and update employee in a database transaction
+        await prisma.$transaction(async (tx) => {
+          // Create the cash transaction
+          await tx.cashTransaction.create({
+            data: {
+              type: validatedData.paymentType,
+              amount: validatedData.amount,
+              currency: validatedData.currency,
+              exchangeRate: validatedData.exchangeRate,
+              description: validatedData.description,
+              referenceId: validatedData.referenceId,
+              userId: locals.user.id,
+              employeeId: validatedData.employeeId,
+              status: 'COMPLETED'
+            }
+          });
+
+          // Update employee's remaining salary
+          const newRemainingSalary = remainingSalary - validatedData.amount;
+          await tx.employee.update({
+            where: { id: validatedData.employeeId },
+            data: {
+              remainingSalary: newRemainingSalary,
+              lastPaymentDate: new Date()
+            }
+          });
+        });
+      } else {
+        // Regular payment without employee
+        await prisma.cashTransaction.create({
+          data: {
+            type: validatedData.paymentType,
+            amount: validatedData.amount,
+            currency: validatedData.currency,
+            exchangeRate: validatedData.exchangeRate,
+            description: validatedData.description,
+            referenceId: validatedData.referenceId,
+            userId: locals.user.id,
+            status: 'COMPLETED'
+          }
+        });
+      }
 
       throw redirect(302, '/cash?success=payment_created');
     } catch (error) {
