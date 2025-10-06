@@ -46,7 +46,43 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
-  default: async ({ request, locals }) => {
+  updateCompany: async ({ request, locals }) => {
+    if (!locals.user) {
+      return fail(401, { error: 'Unauthorized' });
+    }
+
+    try {
+      const formData = await request.formData();
+      const companySettings = [
+        { key: 'companyNameEn', value: formData.get('companyNameEn')?.toString() || '', type: 'STRING' },
+        { key: 'companyNameAr', value: formData.get('companyNameAr')?.toString() || '', type: 'STRING' },
+        { key: 'companyEmail', value: formData.get('companyEmail')?.toString() || '', type: 'STRING' },
+        { key: 'companyPhone', value: formData.get('companyPhone')?.toString() || '', type: 'STRING' },
+        { key: 'companyAddress', value: formData.get('companyAddress')?.toString() || '', type: 'STRING' },
+        { key: 'companyCity', value: formData.get('companyCity')?.toString() || '', type: 'STRING' },
+        { key: 'companyState', value: formData.get('companyState')?.toString() || '', type: 'STRING' },
+        { key: 'companyZipCode', value: formData.get('companyZipCode')?.toString() || '', type: 'STRING' },
+        { key: 'companyCountry', value: formData.get('companyCountry')?.toString() || '', type: 'STRING' },
+        { key: 'companyTaxId', value: formData.get('companyTaxId')?.toString() || '', type: 'STRING' },
+        { key: 'companyWebsite', value: formData.get('companyWebsite')?.toString() || '', type: 'STRING' }
+      ];
+
+      for (const setting of companySettings) {
+        await prisma.settings.upsert({
+          where: { key: setting.key },
+          update: { value: setting.value, type: setting.type },
+          create: { key: setting.key, value: setting.value, type: setting.type }
+        });
+      }
+
+      return { success: true, message: 'Company settings saved successfully' };
+    } catch (error) {
+      console.error('Company settings save error:', error);
+      return fail(500, { error: 'Failed to save company settings' });
+    }
+  },
+
+  updateSystem: async ({ request, locals }) => {
     if (!locals.user) {
       return fail(401, { error: 'Unauthorized' });
     }
@@ -55,12 +91,10 @@ export const actions: Actions = {
       const formData = await request.formData();
       const updates: Array<{ key: string; value: string; type: string }> = [];
 
-      // Process form data
       for (const [key, value] of formData.entries()) {
         let processedValue = value.toString();
         let type = 'STRING';
 
-        // Determine type based on key or value
         if (key.includes('threshold') || key.includes('timeout') || key.includes('attempts')) {
           type = 'NUMBER';
         } else if (key.includes('auto') || key.includes('enable') || key.includes('notifications') || key.includes('darkMode') || key.includes('twoFactor')) {
@@ -71,11 +105,10 @@ export const actions: Actions = {
         updates.push({ key, value: processedValue, type });
       }
 
-      // Update settings in database
       for (const update of updates) {
         await prisma.settings.upsert({
           where: { key: update.key },
-          update: { 
+          update: {
             value: update.value,
             type: update.type
           },
@@ -87,7 +120,7 @@ export const actions: Actions = {
         });
       }
 
-      return { success: true, message: 'Settings saved successfully' };
+      return { success: true, message: 'System settings saved successfully' };
     } catch (error) {
       console.error('Settings save error:', error);
       return fail(500, { error: 'Failed to save settings' });

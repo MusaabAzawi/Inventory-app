@@ -2,74 +2,171 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
   import { locale } from 'svelte-i18n';
-  import { 
-    Settings, 
-    User, 
-    Globe, 
-    Bell, 
-    Shield, 
+  import {
+    Settings,
+    User,
+    Globe,
+    Bell,
+    Shield,
     Database,
     Palette,
     Save,
     Users,
     DollarSign,
-    Building
+    Building,
+    Upload,
+    X,
+    Image as ImageIcon
   } from 'lucide-svelte';
   import LanguageSwitcher from '$lib/components/layout/LanguageSwitcher.svelte';
   import { currencyStore } from '$lib/stores/currency';
-  import type { PageData } from './$types';
+  import { enhance } from '$app/forms';
+  import type { PageData, ActionData } from './$types';
 
   export let data: PageData = {};
+  export let form: ActionData;
 
-  // Mock settings data - will be replaced with server data
-  let settings = {
-    // Company Settings
-    companyNameEn: 'Inventory Pro System',
-    companyNameAr: 'نظام إدارة المخزون',
-    companyEmail: 'admin@inventory.com',
-    companyPhone: '+1234567890',
-    companyAddress: '123 Business Street',
-    
-    // System Settings
-    defaultCurrency: 'IQD',
-    lowStockThreshold: 10,
-    autoBackup: true,
-    emailNotifications: true,
-    smsNotifications: false,
-    
-    // Display Settings
-    defaultLanguage: 'ar',
-    dateFormat: 'DD/MM/YYYY',
-    timeFormat: '24h',
-    darkMode: false,
-    
-    // Security Settings
-    sessionTimeout: 60,
-    passwordPolicy: 'medium',
-    twoFactorAuth: false,
-    loginAttempts: 3
-  };
+  let logoFile: File | null = null;
+  let logoPreview: string | null = null;
+  let uploadingLogo = false;
+  let isSubmittingCompany = false;
 
-  function saveSettings() {
-    // Save currency to the currency store
-    currencyStore.setCurrency(settings.defaultCurrency);
+  $: companyLogo = data.settings?.companyLogo || null;
 
-    // Save to localStorage for persistence
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('defaultCurrency', settings.defaultCurrency);
-    }
+  let companyNameEn = '';
+  let companyNameAr = '';
+  let companyEmail = '';
+  let companyPhone = '';
+  let companyAddress = '';
+  let companyCity = '';
+  let companyState = '';
+  let companyZipCode = '';
+  let companyCountry = '';
+  let companyTaxId = '';
+  let companyWebsite = '';
 
-    // Show success notification
-    alert($_('settings.settingsSaved'));
+  $: if (data.settings) {
+    companyNameEn = data.settings.companyNameEn || '';
+    companyNameAr = data.settings.companyNameAr || '';
+    companyEmail = data.settings.companyEmail || '';
+    companyPhone = data.settings.companyPhone || '';
+    companyAddress = data.settings.companyAddress || '';
+    companyCity = data.settings.companyCity || '';
+    companyState = data.settings.companyState || '';
+    companyZipCode = data.settings.companyZipCode || '';
+    companyCountry = data.settings.companyCountry || '';
+    companyTaxId = data.settings.companyTaxId || '';
+    companyWebsite = data.settings.companyWebsite || '';
   }
 
-  // Load saved currency on mount
+  let systemSettings = {
+    defaultCurrency: data.settings?.defaultCurrency || 'IQD',
+    lowStockThreshold: data.settings?.lowStockThreshold || 10,
+    autoBackup: data.settings?.autoBackup || true,
+    emailNotifications: data.settings?.emailNotifications || true,
+    smsNotifications: data.settings?.smsNotifications || false,
+    defaultLanguage: data.settings?.defaultLanguage || 'ar',
+    dateFormat: data.settings?.dateFormat || 'DD/MM/YYYY',
+    timeFormat: data.settings?.timeFormat || '24h',
+    darkMode: data.settings?.darkMode || false,
+    sessionTimeout: data.settings?.sessionTimeout || 60,
+    passwordPolicy: data.settings?.passwordPolicy || 'medium',
+    twoFactorAuth: data.settings?.twoFactorAuth || false,
+    loginAttempts: data.settings?.loginAttempts || 3
+  };
+
+  function handleLogoSelect(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert('File size exceeds 2MB limit');
+      input.value = '';
+      return;
+    }
+
+    if (!['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) {
+      alert('Invalid file type. Only PNG, JPG, and JPEG are allowed');
+      input.value = '';
+      return;
+    }
+
+    logoFile = file;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      logoPreview = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function uploadLogo() {
+    if (!logoFile) return;
+
+    uploadingLogo = true;
+    try {
+      const formData = new FormData();
+      formData.append('logo', logoFile);
+
+      const response = await fetch('/api/company/logo', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        companyLogo = result.logoUrl;
+        logoPreview = null;
+        logoFile = null;
+        alert($_('settings.logoUploadedSuccessfully'));
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Failed to upload logo');
+      }
+    } catch (error) {
+      console.error('Logo upload error:', error);
+      alert('Failed to upload logo');
+    } finally {
+      uploadingLogo = false;
+    }
+  }
+
+  async function removeLogo() {
+    if (!confirm($_('settings.confirmRemoveLogo'))) return;
+
+    try {
+      const response = await fetch('/api/company/logo', {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        companyLogo = null;
+        logoPreview = null;
+        logoFile = null;
+        alert($_('settings.logoRemovedSuccessfully'));
+      } else {
+        alert('Failed to remove logo');
+      }
+    } catch (error) {
+      console.error('Logo removal error:', error);
+      alert('Failed to remove logo');
+    }
+  }
+
+  function saveSystemSettings() {
+    currencyStore.setCurrency(systemSettings.defaultCurrency);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('defaultCurrency', systemSettings.defaultCurrency);
+    }
+  }
+
   import { onMount } from 'svelte';
   onMount(() => {
     if (typeof window !== 'undefined') {
       const savedCurrency = localStorage.getItem('defaultCurrency');
       if (savedCurrency) {
-        settings.defaultCurrency = savedCurrency;
+        systemSettings.defaultCurrency = savedCurrency;
         currencyStore.setCurrency(savedCurrency);
       }
     }
@@ -135,60 +232,257 @@
             {$_('settings.companySettings')}
           </h2>
         </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label for="company-name-en" class="label">{$_('settings.companyNameEnglish')}</label>
-            <input 
-              id="company-name-en"
-              type="text" 
-              bind:value={settings.companyNameEn}
-              class="input"
-              dir="ltr"
-            />
+
+        {#if form?.success}
+          <div class="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg dark:bg-green-900/20 dark:border-green-800">
+            <p class="text-sm text-green-600 dark:text-green-400">{form.message}</p>
           </div>
-          
-          <div>
-            <label for="company-name-ar" class="label">{$_('settings.companyNameArabic')}</label>
-            <input 
-              id="company-name-ar"
-              type="text" 
-              bind:value={settings.companyNameAr}
-              class="input"
-              dir="rtl"
-            />
+        {/if}
+
+        {#if form?.error}
+          <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg dark:bg-red-900/20 dark:border-red-800">
+            <p class="text-sm text-red-600 dark:text-red-400">{form.error}</p>
           </div>
-          
-          <div>
-            <label for="company-email" class="label">{$_('settings.companyEmail')}</label>
-            <input 
-              id="company-email"
-              type="email" 
-              bind:value={settings.companyEmail}
-              class="input"
-            />
-          </div>
-          
-          <div>
-            <label for="company-phone" class="label">{$_('settings.companyPhone')}</label>
-            <input 
-              id="company-phone"
-              type="tel" 
-              bind:value={settings.companyPhone}
-              class="input"
-            />
-          </div>
-          
-          <div class="md:col-span-2">
-            <label for="company-address" class="label">{$_('settings.companyAddress')}</label>
-            <textarea 
-              id="company-address"
-              bind:value={settings.companyAddress}
-              rows="3"
-              class="input"
-            ></textarea>
+        {/if}
+
+        <!-- Company Logo Upload -->
+        <div class="mb-8 p-6 bg-gray-50 rounded-lg dark:bg-gray-700/50">
+          <h3 class="text-md font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+            <ImageIcon class="h-5 w-5 ltr:mr-2 rtl:ml-2" />
+            {$_('settings.companyLogo')}
+          </h3>
+
+          <div class="flex flex-col md:flex-row items-start gap-6">
+            <!-- Logo Preview -->
+            <div class="flex-shrink-0">
+              {#if logoPreview}
+                <div class="relative w-48 h-48 border-2 border-dashed border-blue-400 rounded-lg overflow-hidden">
+                  <img src={logoPreview} alt="Logo preview" class="w-full h-full object-contain" />
+                </div>
+              {:else if companyLogo}
+                <div class="relative w-48 h-48 border-2 border-gray-300 rounded-lg overflow-hidden dark:border-gray-600">
+                  <img src={companyLogo} alt="Company logo" class="w-full h-full object-contain p-2" />
+                  <button
+                    type="button"
+                    on:click={removeLogo}
+                    class="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-1 rounded-full"
+                    title={$_('common.remove')}
+                  >
+                    <X class="h-4 w-4" />
+                  </button>
+                </div>
+              {:else}
+                <div class="w-48 h-48 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center dark:border-gray-600">
+                  <div class="text-center">
+                    <ImageIcon class="h-12 w-12 mx-auto text-gray-400 mb-2" />
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{$_('settings.noLogo')}</p>
+                  </div>
+                </div>
+              {/if}
+            </div>
+
+            <!-- Upload Controls -->
+            <div class="flex-1">
+              <label for="logo-upload" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {$_('settings.uploadLogo')}
+              </label>
+              <input
+                id="logo-upload"
+                type="file"
+                accept="image/png, image/jpeg, image/jpg"
+                on:change={handleLogoSelect}
+                class="hidden"
+              />
+              <div class="flex flex-col gap-2">
+                <label
+                  for="logo-upload"
+                  class="btn-secondary btn-md inline-flex items-center justify-center cursor-pointer w-full md:w-auto"
+                >
+                  <Upload class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+                  {$_('settings.chooseFile')}
+                </label>
+
+                {#if logoFile}
+                  <button
+                    type="button"
+                    on:click={uploadLogo}
+                    disabled={uploadingLogo}
+                    class="btn-primary btn-md w-full md:w-auto"
+                  >
+                    {#if uploadingLogo}
+                      <div class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent ltr:mr-2 rtl:ml-2"></div>
+                      {$_('common.uploading')}
+                    {:else}
+                      <Save class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+                      {$_('settings.uploadNow')}
+                    {/if}
+                  </button>
+                {/if}
+              </div>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                {$_('settings.logoRequirements')}
+              </p>
+            </div>
           </div>
         </div>
+
+        <!-- Company Information Form -->
+        <form
+          method="POST"
+          action="?/updateCompany"
+          use:enhance={() => {
+            isSubmittingCompany = true;
+            return async ({ update }) => {
+              await update();
+              isSubmittingCompany = false;
+            };
+          }}
+        >
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label for="company-name-en" class="label">{$_('settings.companyNameEnglish')} *</label>
+              <input
+                id="company-name-en"
+                name="companyNameEn"
+                type="text"
+                bind:value={companyNameEn}
+                required
+                class="input"
+                dir="ltr"
+              />
+            </div>
+
+            <div>
+              <label for="company-name-ar" class="label">{$_('settings.companyNameArabic')} *</label>
+              <input
+                id="company-name-ar"
+                name="companyNameAr"
+                type="text"
+                bind:value={companyNameAr}
+                required
+                class="input"
+                dir="rtl"
+              />
+            </div>
+
+            <div>
+              <label for="company-email" class="label">{$_('settings.companyEmail')}</label>
+              <input
+                id="company-email"
+                name="companyEmail"
+                type="email"
+                bind:value={companyEmail}
+                class="input"
+              />
+            </div>
+
+            <div>
+              <label for="company-phone" class="label">{$_('settings.companyPhone')}</label>
+              <input
+                id="company-phone"
+                name="companyPhone"
+                type="tel"
+                bind:value={companyPhone}
+                class="input"
+              />
+            </div>
+
+            <div>
+              <label for="company-tax-id" class="label">{$_('settings.companyTaxId')}</label>
+              <input
+                id="company-tax-id"
+                name="companyTaxId"
+                type="text"
+                bind:value={companyTaxId}
+                class="input"
+              />
+            </div>
+
+            <div>
+              <label for="company-website" class="label">{$_('settings.companyWebsite')}</label>
+              <input
+                id="company-website"
+                name="companyWebsite"
+                type="url"
+                bind:value={companyWebsite}
+                class="input"
+                placeholder="https://example.com"
+              />
+            </div>
+
+            <div class="md:col-span-2">
+              <label for="company-address" class="label">{$_('settings.companyAddress')}</label>
+              <textarea
+                id="company-address"
+                name="companyAddress"
+                bind:value={companyAddress}
+                rows="2"
+                class="input"
+                dir={$locale === 'ar' ? 'rtl' : 'ltr'}
+              ></textarea>
+            </div>
+
+            <div>
+              <label for="company-city" class="label">{$_('settings.companyCity')}</label>
+              <input
+                id="company-city"
+                name="companyCity"
+                type="text"
+                bind:value={companyCity}
+                class="input"
+              />
+            </div>
+
+            <div>
+              <label for="company-state" class="label">{$_('settings.companyState')}</label>
+              <input
+                id="company-state"
+                name="companyState"
+                type="text"
+                bind:value={companyState}
+                class="input"
+              />
+            </div>
+
+            <div>
+              <label for="company-zip-code" class="label">{$_('settings.companyZipCode')}</label>
+              <input
+                id="company-zip-code"
+                name="companyZipCode"
+                type="text"
+                bind:value={companyZipCode}
+                class="input"
+              />
+            </div>
+
+            <div>
+              <label for="company-country" class="label">{$_('settings.companyCountry')}</label>
+              <input
+                id="company-country"
+                name="companyCountry"
+                type="text"
+                bind:value={companyCountry}
+                class="input"
+              />
+            </div>
+          </div>
+
+          <div class="flex justify-end mt-6">
+            <button
+              type="submit"
+              disabled={isSubmittingCompany}
+              class="btn-primary btn-md"
+            >
+              {#if isSubmittingCompany}
+                <div class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent ltr:mr-2 rtl:ml-2"></div>
+                {$_('common.saving')}
+              {:else}
+                <Save class="h-5 w-5 ltr:mr-2 rtl:ml-2" />
+                {$_('settings.saveCompanySettings')}
+              {/if}
+            </button>
+          </div>
+        </form>
       </div>
 
       <!-- System Settings -->
@@ -203,7 +497,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label for="default-currency" class="label">{$_('settings.defaultCurrency')}</label>
-            <select id="default-currency" bind:value={settings.defaultCurrency} class="input">
+            <select id="default-currency" bind:value={systemSettings.defaultCurrency} class="input">
               <option value="IQD">IQD - Iraqi Dinar (د.ع)</option>
               <option value="USD">USD - US Dollar</option>
               <option value="EUR">EUR - Euro</option>
@@ -212,25 +506,25 @@
               <option value="AED">AED - UAE Dirham</option>
             </select>
           </div>
-          
+
           <div>
             <label for="low-stock-threshold" class="label">{$_('settings.lowStockThreshold')}</label>
-            <input 
+            <input
               id="low-stock-threshold"
-              type="number" 
-              bind:value={settings.lowStockThreshold}
+              type="number"
+              bind:value={systemSettings.lowStockThreshold}
               min="1"
               class="input"
             />
           </div>
-          
+
           <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg dark:border-gray-700">
             <div>
               <h3 class="font-medium text-gray-900 dark:text-white">{$_('settings.autoBackup')}</h3>
               <p class="text-sm text-gray-500 dark:text-gray-400">{$_('settings.autoBackupDescription')}</p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" bind:checked={settings.autoBackup} class="sr-only peer" />
+              <input type="checkbox" bind:checked={systemSettings.autoBackup} class="sr-only peer" />
               <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
             </label>
           </div>
@@ -249,7 +543,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label for="default-language" class="label">{$_('settings.defaultLanguage')}</label>
-            <select id="default-language" bind:value={settings.defaultLanguage} class="input">
+            <select id="default-language" bind:value={systemSettings.defaultLanguage} class="input">
               <option value="ar">العربية (Arabic)</option>
               <option value="en">English</option>
             </select>
@@ -257,7 +551,7 @@
           
           <div>
             <label for="date-format" class="label">{$_('settings.dateFormat')}</label>
-            <select id="date-format" bind:value={settings.dateFormat} class="input">
+            <select id="date-format" bind:value={systemSettings.dateFormat} class="input">
               <option value="DD/MM/YYYY">DD/MM/YYYY</option>
               <option value="MM/DD/YYYY">MM/DD/YYYY</option>
               <option value="YYYY-MM-DD">YYYY-MM-DD</option>
@@ -266,7 +560,7 @@
           
           <div>
             <label for="time-format" class="label">{$_('settings.timeFormat')}</label>
-            <select id="time-format" bind:value={settings.timeFormat} class="input">
+            <select id="time-format" bind:value={systemSettings.timeFormat} class="input">
               <option value="24h">{$_('settings.24Hour')}</option>
               <option value="12h">{$_('settings.12Hour')}</option>
             </select>
@@ -278,7 +572,7 @@
               <p class="text-sm text-gray-500 dark:text-gray-400">{$_('settings.darkModeDescription')}</p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" bind:checked={settings.darkMode} class="sr-only peer" />
+              <input type="checkbox" bind:checked={systemSettings.darkMode} class="sr-only peer" />
               <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
             </label>
           </div>
@@ -301,7 +595,7 @@
               <p class="text-sm text-gray-500 dark:text-gray-400">{$_('settings.emailNotificationsDescription')}</p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" bind:checked={settings.emailNotifications} class="sr-only peer" />
+              <input type="checkbox" bind:checked={systemSettings.emailNotifications} class="sr-only peer" />
               <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
             </label>
           </div>
@@ -312,7 +606,7 @@
               <p class="text-sm text-gray-500 dark:text-gray-400">{$_('settings.smsNotificationsDescription')}</p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" bind:checked={settings.smsNotifications} class="sr-only peer" />
+              <input type="checkbox" bind:checked={systemSettings.smsNotifications} class="sr-only peer" />
               <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
             </label>
           </div>
@@ -334,7 +628,7 @@
             <input 
               id="session-timeout"
               type="number" 
-              bind:value={settings.sessionTimeout}
+              bind:value={systemSettings.sessionTimeout}
               min="15"
               max="480"
               class="input"
@@ -343,7 +637,7 @@
           
           <div>
             <label for="password-policy" class="label">{$_('settings.passwordPolicy')}</label>
-            <select id="password-policy" bind:value={settings.passwordPolicy} class="input">
+            <select id="password-policy" bind:value={systemSettings.passwordPolicy} class="input">
               <option value="weak">{$_('settings.passwordPolicyWeak')}</option>
               <option value="medium">{$_('settings.passwordPolicyMedium')}</option>
               <option value="strong">{$_('settings.passwordPolicyStrong')}</option>
@@ -355,7 +649,7 @@
             <input 
               id="login-attempts"
               type="number" 
-              bind:value={settings.loginAttempts}
+              bind:value={systemSettings.loginAttempts}
               min="3"
               max="10"
               class="input"
@@ -368,21 +662,22 @@
               <p class="text-sm text-gray-500 dark:text-gray-400">{$_('settings.twoFactorAuthDescription')}</p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" bind:checked={settings.twoFactorAuth} class="sr-only peer" />
+              <input type="checkbox" bind:checked={systemSettings.twoFactorAuth} class="sr-only peer" />
               <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
             </label>
           </div>
         </div>
       </div>
 
-      <!-- Save Button -->
+      <!-- System Settings Save Button -->
       <div class="flex justify-end">
-        <button 
-          on:click={saveSettings}
+        <button
+          type="button"
+          on:click={saveSystemSettings}
           class="btn-primary btn-lg"
         >
           <Save class="h-5 w-5 ltr:mr-2 rtl:ml-2" />
-          {$_('settings.saveSettings')}
+          {$_('settings.saveSystemSettings')}
         </button>
       </div>
     </div>

@@ -3,6 +3,7 @@ import type { PageServerLoad } from './$types';
 import { error } from '@sveltejs/kit';
 import { prisma } from '$lib/server/db';
 import { getFlash } from '$lib/server/flash';
+import { getCompanySettings } from '$lib/server/companySettings';
 
 export const load: PageServerLoad = async ({ params, locals, cookies }) => {
   // Get any flash messages
@@ -57,7 +58,9 @@ export const load: PageServerLoad = async ({ params, locals, cookies }) => {
       throw error(404, 'Sale not found');
     }
 
-    return { sale, flash };
+    const companySettings = await getCompanySettings();
+
+    return { sale, flash, companySettings };
   } catch (err) {
     if (err && typeof err === 'object' && 'status' in err) {
       throw err;

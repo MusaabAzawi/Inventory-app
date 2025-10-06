@@ -6,9 +6,9 @@
   import { page } from '$app/stores';
   import { onMount } from 'svelte';
   import { setLocale } from '$lib/i18n';
-  
+
   let sidebarOpen = true;
-  
+
   onMount(() => {
     if ($page.data.user?.preferredLanguage) {
       setLocale($page.data.user.preferredLanguage);
@@ -16,16 +16,50 @@
   });
 </script>
 
+<style>
+  @media print {
+    :global(.sidebar),
+    :global(.header),
+    :global(nav),
+    :global(.no-print) {
+      display: none !important;
+    }
+
+    :global(.print-only) {
+      display: block !important;
+    }
+
+    :global(body) {
+      margin: 0;
+      padding: 0;
+      background: white !important;
+    }
+
+    :global(.flex-1) {
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    :global(main) {
+      padding: 0 !important;
+      margin: 0 !important;
+      max-width: 100% !important;
+    }
+  }
+</style>
+
 <div class="min-h-screen bg-gray-50 flex dark:bg-gray-900">
   <!-- Sidebar (always visible on desktop) -->
-  <div class="hidden md:flex md:w-64 md:flex-col">
+  <div class="hidden md:flex md:w-64 md:flex-col sidebar no-print">
     <Sidebar bind:open={sidebarOpen} />
   </div>
 
   <!-- Main content area -->
   <div class="flex-1 flex flex-col min-w-0">
-    <Header bind:sidebarOpen />
-    
+    <div class="header no-print">
+      <Header bind:sidebarOpen />
+    </div>
+
     <main class="flex-1 p-4 sm:p-6 overflow-auto">
       <div class="max-w-7xl mx-auto">
         <slot />
