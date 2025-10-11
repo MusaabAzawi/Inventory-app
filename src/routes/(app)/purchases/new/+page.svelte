@@ -18,6 +18,8 @@
     Package
   } from 'lucide-svelte';
   import BarcodeScanner from '$lib/components/barcode/BarcodeScanner.svelte';
+  import { currentCurrency } from '$lib/stores/currency';
+  import { SUPPORTED_CURRENCIES } from '$lib/utils/currency';
   import type { PageData, ActionData } from './$types';
   
   export let data: PageData;
@@ -29,11 +31,21 @@
   // Purchase data
   let purchaseData = {
     supplierId: '',
+    currency: '',
+    exchangeRate: 1,
     discount: 0,
     tax: 0,
     purchaseDate: new Date().toISOString().split('T')[0],
     notes: ''
   };
+
+  $: {
+    if ($currentCurrency) {
+      purchaseData.currency = $currentCurrency.code;
+      const currency = SUPPORTED_CURRENCIES.find(c => c.code === $currentCurrency.code);
+      purchaseData.exchangeRate = currency?.exchangeRate || 1;
+    }
+  }
   
   // Purchase items
   let items: Array<{
@@ -49,6 +61,13 @@
   // Computed values
   $: subtotal = items.reduce((sum, item) => sum + item.total, 0);
   $: netAmount = subtotal - purchaseData.discount + purchaseData.tax;
+  $: displayAmount = (amount: number) => {
+    if (purchaseData.currency === 'USD') {
+      return amount.toFixed(2);
+    }
+    return (amount * purchaseData.exchangeRate).toFixed(0);
+  };
+  $: currencySymbol = SUPPORTED_CURRENCIES.find(c => c.code === purchaseData.currency)?.symbol || '$';
 
   function addItem() {
     items = [...items, {
@@ -494,10 +513,36 @@
           </h3>
           
           <div class="space-y-4">
+            <!-- Currency Selection -->
+            <div>
+              <label for="currency" class="label">{$_('sales.currency')}</label>
+              <select
+                id="currency"
+                bind:value={purchaseData.currency}
+                on:change={(e) => {
+                  const currency = SUPPORTED_CURRENCIES.find(c => c.code === (e.target as HTMLSelectElement).value);
+                  purchaseData.exchangeRate = currency?.exchangeRate || 1;
+                }}
+                class="input"
+                required
+              >
+                {#each SUPPORTED_CURRENCIES as currency}
+                  <option value={currency.code}>
+                    {currency.code} - {$locale === 'ar' ? currency.nameAr : currency.nameEn}
+                  </option>
+                {/each}
+              </select>
+              {#if purchaseData.currency !== 'USD'}
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {$_('sales.exchangeRate')}: 1 USD = {purchaseData.exchangeRate.toLocaleString($locale === 'ar' ? 'ar-IQ' : 'en-US')} {purchaseData.currency}
+                </p>
+              {/if}
+            </div>
+
             <!-- Subtotal -->
             <div class="flex justify-between">
               <span class="text-gray-600 dark:text-gray-400">{$_('purchases.subtotal')}</span>
-              <span class="font-semibold">${subtotal.toFixed(2)}</span>
+              <span class="font-semibold">{currencySymbol}{displayAmount(subtotal)}</span>
             </div>
 
             <!-- Discount -->
@@ -530,7 +575,7 @@
             <!-- Net Amount -->
             <div class="flex justify-between text-lg font-semibold border-t pt-4">
               <span>{$_('purchases.totalCost')}</span>
-              <span class="text-blue-600">${netAmount.toFixed(2)}</span>
+              <span class="text-blue-600">{currencySymbol}{displayAmount(netAmount)}</span>
             </div>
 
             <!-- Notes -->
@@ -586,6 +631,8 @@
 
     <!-- Hidden fields for form submission -->
     <input type="hidden" name="supplierId" value={purchaseData.supplierId} />
+    <input type="hidden" name="currency" value={purchaseData.currency} />
+    <input type="hidden" name="exchangeRate" value={purchaseData.exchangeRate} />
     <input type="hidden" name="discount" value={purchaseData.discount} />
     <input type="hidden" name="tax" value={purchaseData.tax} />
     <input type="hidden" name="purchaseDate" value={purchaseData.purchaseDate} />

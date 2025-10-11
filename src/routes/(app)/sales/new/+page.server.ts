@@ -18,6 +18,8 @@ const saleSchema = z.object({
   paymentMethod: z.enum(['CASH', 'CREDIT', 'CARD'], {
     errorMap: () => ({ message: 'Please select a valid payment method' })
   }),
+  currency: z.string().default('USD'),
+  exchangeRate: z.number().positive('Exchange rate must be positive').default(1),
   notes: z.string().optional()
 });
 
@@ -87,6 +89,8 @@ export const actions: Actions = {
         discount: Number(formData.get('discount')?.toString() || '0'),
         tax: Number(formData.get('tax')?.toString() || '0'),
         paymentMethod: formData.get('paymentMethod')?.toString() || '',
+        currency: formData.get('currency')?.toString() || 'USD',
+        exchangeRate: Number(formData.get('exchangeRate')?.toString() || '1'),
         notes: formData.get('notes')?.toString() || undefined
       };
 
@@ -171,6 +175,8 @@ export const actions: Actions = {
             discount: validatedData.discount,
             tax: validatedData.tax,
             netAmount,
+            currency: validatedData.currency,
+            exchangeRate: validatedData.exchangeRate,
             paymentMethod: validatedData.paymentMethod,
             notes: validatedData.notes,
             status: 'COMPLETED'

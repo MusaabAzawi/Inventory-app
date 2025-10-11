@@ -91,6 +91,8 @@ model Sale {
   discount      Float      @default(0)
   tax           Float      @default(0)
   netAmount     Float
+  currency      String     @default("USD")
+  exchangeRate  Float      @default(1)
   paymentMethod String     @default("CASH")
   status        String     @default("COMPLETED")
   notes         String?
@@ -125,6 +127,8 @@ model Purchase {
   discount      Float          @default(0)
   tax           Float          @default(0)
   netAmount     Float
+  currency      String         @default("USD")
+  exchangeRate  Float          @default(1)
   status        String         @default("COMPLETED")
   notes         String?
   purchaseDate  DateTime       @default(now())

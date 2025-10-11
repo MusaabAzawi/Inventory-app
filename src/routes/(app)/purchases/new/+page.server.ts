@@ -17,6 +17,8 @@ const purchaseSchema = z.object({
   items: z.array(purchaseItemSchema).min(1, 'At least one item is required'),
   discount: z.number().min(0, 'Discount cannot be negative').default(0),
   tax: z.number().min(0, 'Tax cannot be negative').default(0),
+  currency: z.string().default('USD'),
+  exchangeRate: z.number().positive('Exchange rate must be positive').default(1),
   purchaseDate: z.string().optional(),
   notes: z.string().optional()
 });
@@ -126,6 +128,8 @@ export const actions: Actions = {
         })),
         discount: Number(formData.get('discount')?.toString() || '0'),
         tax: Number(formData.get('tax')?.toString() || '0'),
+        currency: formData.get('currency')?.toString() || 'USD',
+        exchangeRate: Number(formData.get('exchangeRate')?.toString() || '1'),
         purchaseDate: formData.get('purchaseDate')?.toString() || undefined,
         notes: formData.get('notes')?.toString() || undefined
       };
@@ -206,6 +210,8 @@ export const actions: Actions = {
             discount: validatedData.discount,
             tax: validatedData.tax,
             netAmount,
+            currency: validatedData.currency,
+            exchangeRate: validatedData.exchangeRate,
             status: 'COMPLETED',
             notes: validatedData.notes,
             purchaseDate: validatedData.purchaseDate ? new Date(validatedData.purchaseDate) : new Date()

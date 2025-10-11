@@ -17,7 +17,9 @@
     CheckCircle,
     Clock
   } from 'lucide-svelte';
-  import { displayAmount } from '$lib/utils/currencyHelper';
+  import { displayAmountFrom } from '$lib/utils/currencyHelper';
+
+  $: displayAmount = (amount: number) => displayAmountFrom(amount, sale.currency || 'USD');
   import type { PageData } from './$types';
 
   export let data: PageData;

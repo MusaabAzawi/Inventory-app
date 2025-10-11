@@ -13,7 +13,7 @@
     Calendar
   } from 'lucide-svelte';
   import DataTable from '$lib/components/ui/DataTable.svelte';
-  import { displayAmount } from '$lib/utils/currencyHelper';
+  import { displayAmountFrom } from '$lib/utils/currencyHelper';
   import type { PageData } from './$types';
   
   export let data: PageData;
@@ -86,7 +86,7 @@
               {$_('sales.todaysSales')}
             </p>
             <p class="text-2xl font-semibold text-gray-900 dark:text-white">
-              {displayAmount(data.stats.today.amount)}
+              {displayAmountFrom(data.stats.today.amount, 'USD')}
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-400">
               {$_('sales.transactions', { values: { count: data.stats.today.count } })}
@@ -106,7 +106,7 @@
               {$_('sales.thisMonth')}
             </p>
             <p class="text-2xl font-semibold text-gray-900 dark:text-white">
-              {displayAmount(data.stats.thisMonth.amount)}
+              {displayAmountFrom(data.stats.thisMonth.amount, 'USD')}
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-400">
               {$_('sales.transactions', { values: { count: data.stats.thisMonth.count } })}
@@ -126,7 +126,7 @@
               {$_('sales.totalSales')}
             </p>
             <p class="text-2xl font-semibold text-gray-900 dark:text-white">
-              {displayAmount(data.stats.total.amount)}
+              {displayAmountFrom(data.stats.total.amount, 'USD')}
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-400">
               {$_('sales.transactions', { values: { count: data.stats.total.count } })}
@@ -168,11 +168,11 @@
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
           <div>
             <p class="font-semibold text-green-600 dark:text-green-400">
-              {displayAmount(item.netAmount)}
+              {displayAmountFrom(item.netAmount, item.currency || 'USD')}
             </p>
             {#if item.discount > 0}
               <p class="text-xs text-gray-500 dark:text-gray-400">
-                {$_('sales.discount', { values: { amount: displayAmount(item.discount) } })}
+                {$_('sales.discount', { values: { amount: displayAmountFrom(item.discount, item.currency || 'USD') } })}
               </p>
             {/if}
           </div>
