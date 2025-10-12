@@ -4,16 +4,20 @@
   import { page } from '$app/stores';
   import { onMount } from 'svelte';
   import '$lib/i18n';
-  
+  import { darkMode } from '$lib/stores/darkMode';
+
   let isLoading = true;
-  
+
   onMount(() => {
+    // Initialize dark mode from localStorage
+    darkMode.init();
+
     // Small delay to ensure i18n is loaded
     setTimeout(() => {
       isLoading = false;
     }, 100);
   });
-  
+
   $: isAuthPage = $page.url.pathname.startsWith('/auth');
 </script>
 

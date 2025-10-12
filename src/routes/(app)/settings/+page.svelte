@@ -20,6 +20,8 @@
   } from 'lucide-svelte';
   import LanguageSwitcher from '$lib/components/layout/LanguageSwitcher.svelte';
   import { currencyStore } from '$lib/stores/currency';
+  import { notifications } from '$lib/stores/notifications';
+  import { darkMode } from '$lib/stores/darkMode';
   import { enhance } from '$app/forms';
   import type { PageData, ActionData } from './$types';
 
@@ -30,6 +32,7 @@
   let logoPreview: string | null = null;
   let uploadingLogo = false;
   let isSubmittingCompany = false;
+  let isSubmittingSystem = false;
 
   $: companyLogo = data.settings?.companyLogo || null;
 
@@ -68,12 +71,19 @@
     defaultLanguage: data.settings?.defaultLanguage || 'ar',
     dateFormat: data.settings?.dateFormat || 'DD/MM/YYYY',
     timeFormat: data.settings?.timeFormat || '24h',
-    darkMode: data.settings?.darkMode || false,
     sessionTimeout: data.settings?.sessionTimeout || 60,
     passwordPolicy: data.settings?.passwordPolicy || 'medium',
     twoFactorAuth: data.settings?.twoFactorAuth || false,
     loginAttempts: data.settings?.loginAttempts || 3
   };
+
+  $: if (data.settings?.darkMode !== undefined) {
+    darkMode.set(data.settings.darkMode);
+  }
+
+  function toggleDarkMode() {
+    darkMode.toggle();
+  }
 
   function handleLogoSelect(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -119,14 +129,14 @@
         companyLogo = result.logoUrl;
         logoPreview = null;
         logoFile = null;
-        alert($_('settings.logoUploadedSuccessfully'));
+        notifications.success($_('settings.logoUploadedSuccessfully'));
       } else {
         const error = await response.json();
-        alert(error.message || 'Failed to upload logo');
+        notifications.error($_('common.error'), error.message || $_('common.uploadFailed'));
       }
     } catch (error) {
       console.error('Logo upload error:', error);
-      alert('Failed to upload logo');
+      notifications.error($_('common.error'), $_('common.uploadFailed'));
     } finally {
       uploadingLogo = false;
     }
@@ -144,21 +154,22 @@
         companyLogo = null;
         logoPreview = null;
         logoFile = null;
-        alert($_('settings.logoRemovedSuccessfully'));
+        notifications.success($_('settings.logoRemovedSuccessfully'));
       } else {
-        alert('Failed to remove logo');
+        notifications.error($_('common.error'), $_('common.deleteFailed'));
       }
     } catch (error) {
       console.error('Logo removal error:', error);
-      alert('Failed to remove logo');
+      notifications.error($_('common.error'), $_('common.deleteFailed'));
     }
   }
 
-  function saveSystemSettings() {
+  function handleSystemSettingsSuccess() {
     currencyStore.setCurrency(systemSettings.defaultCurrency);
     if (typeof window !== 'undefined') {
       localStorage.setItem('defaultCurrency', systemSettings.defaultCurrency);
     }
+    notifications.success($_('settings.settingsSaved'));
   }
 
   import { onMount } from 'svelte';
@@ -332,9 +343,15 @@
           action="?/updateCompany"
           use:enhance={() => {
             isSubmittingCompany = true;
-            return async ({ update }) => {
+            return async ({ result, update }) => {
               await update();
               isSubmittingCompany = false;
+
+              if (result.type === 'success' && result.data?.success) {
+                notifications.success($_('settings.settingsSaved'));
+              } else if (result.type === 'failure') {
+                notifications.error($_('common.error'), result.data?.error || $_('common.saveFailed'));
+              }
             };
           }}
         >
@@ -430,6 +447,7 @@
                 type="text"
                 bind:value={companyCity}
                 class="input"
+                dir={$locale === 'ar' ? 'rtl' : 'ltr'}
               />
             </div>
 
@@ -441,6 +459,7 @@
                 type="text"
                 bind:value={companyState}
                 class="input"
+                dir={$locale === 'ar' ? 'rtl' : 'ltr'}
               />
             </div>
 
@@ -452,6 +471,7 @@
                 type="text"
                 bind:value={companyZipCode}
                 class="input"
+                dir="ltr"
               />
             </div>
 
@@ -463,6 +483,7 @@
                 type="text"
                 bind:value={companyCountry}
                 class="input"
+                dir={$locale === 'ar' ? 'rtl' : 'ltr'}
               />
             </div>
           </div>
@@ -486,200 +507,226 @@
       </div>
 
       <!-- System Settings -->
-      <div id="system" class="bg-white rounded-lg shadow p-6 dark:bg-gray-800">
-        <div class="flex items-center mb-6">
-          <Settings class="h-6 w-6 text-green-600 ltr:mr-3 rtl:ml-3" />
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-            {$_('settings.systemSettings')}
-          </h2>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label for="default-currency" class="label">{$_('settings.defaultCurrency')}</label>
-            <select id="default-currency" bind:value={systemSettings.defaultCurrency} class="input">
-              <option value="IQD">IQD - Iraqi Dinar (د.ع)</option>
-              <option value="USD">USD - US Dollar</option>
-              <option value="EUR">EUR - Euro</option>
-              <option value="GBP">GBP - British Pound</option>
-              <option value="SAR">SAR - Saudi Riyal</option>
-              <option value="AED">AED - UAE Dirham</option>
-            </select>
+      <form
+        method="POST"
+        action="?/updateSystem"
+        use:enhance={() => {
+          isSubmittingSystem = true;
+          return async ({ result, update }) => {
+            await update();
+            isSubmittingSystem = false;
+
+            if (result.type === 'success' && result.data?.success) {
+              handleSystemSettingsSuccess();
+            } else if (result.type === 'failure') {
+              notifications.error($_('common.error'), result.data?.error || $_('common.saveFailed'));
+            }
+          };
+        }}
+      >
+        <div id="system" class="bg-white rounded-lg shadow p-6 dark:bg-gray-800">
+          <div class="flex items-center mb-6">
+            <Settings class="h-6 w-6 text-green-600 ltr:mr-3 rtl:ml-3" />
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+              {$_('settings.systemSettings')}
+            </h2>
           </div>
 
-          <div>
-            <label for="low-stock-threshold" class="label">{$_('settings.lowStockThreshold')}</label>
-            <input
-              id="low-stock-threshold"
-              type="number"
-              bind:value={systemSettings.lowStockThreshold}
-              min="1"
-              class="input"
-            />
-          </div>
-
-          <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg dark:border-gray-700">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h3 class="font-medium text-gray-900 dark:text-white">{$_('settings.autoBackup')}</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400">{$_('settings.autoBackupDescription')}</p>
+              <label for="default-currency" class="label">{$_('settings.defaultCurrency')}</label>
+              <select id="default-currency" name="defaultCurrency" bind:value={systemSettings.defaultCurrency} class="input">
+                <option value="IQD">IQD - Iraqi Dinar (د.ع)</option>
+                <option value="USD">USD - US Dollar</option>
+                <option value="EUR">EUR - Euro</option>
+                <option value="GBP">GBP - British Pound</option>
+                <option value="SAR">SAR - Saudi Riyal</option>
+                <option value="AED">AED - UAE Dirham</option>
+              </select>
             </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" bind:checked={systemSettings.autoBackup} class="sr-only peer" />
-              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-            </label>
-          </div>
-        </div>
-      </div>
 
-      <!-- Display Settings -->
-      <div id="display" class="bg-white rounded-lg shadow p-6 dark:bg-gray-800">
-        <div class="flex items-center mb-6">
-          <Palette class="h-6 w-6 text-purple-600 ltr:mr-3 rtl:ml-3" />
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-            {$_('settings.displaySettings')}
-          </h2>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label for="default-language" class="label">{$_('settings.defaultLanguage')}</label>
-            <select id="default-language" bind:value={systemSettings.defaultLanguage} class="input">
-              <option value="ar">العربية (Arabic)</option>
-              <option value="en">English</option>
-            </select>
-          </div>
-          
-          <div>
-            <label for="date-format" class="label">{$_('settings.dateFormat')}</label>
-            <select id="date-format" bind:value={systemSettings.dateFormat} class="input">
-              <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-              <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-              <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-            </select>
-          </div>
-          
-          <div>
-            <label for="time-format" class="label">{$_('settings.timeFormat')}</label>
-            <select id="time-format" bind:value={systemSettings.timeFormat} class="input">
-              <option value="24h">{$_('settings.24Hour')}</option>
-              <option value="12h">{$_('settings.12Hour')}</option>
-            </select>
-          </div>
-          
-          <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg dark:border-gray-700">
             <div>
-              <h3 class="font-medium text-gray-900 dark:text-white">{$_('settings.darkMode')}</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400">{$_('settings.darkModeDescription')}</p>
+              <label for="low-stock-threshold" class="label">{$_('settings.lowStockThreshold')}</label>
+              <input
+                id="low-stock-threshold"
+                name="lowStockThreshold"
+                type="number"
+                bind:value={systemSettings.lowStockThreshold}
+                min="1"
+                class="input"
+              />
             </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" bind:checked={systemSettings.darkMode} class="sr-only peer" />
-              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-            </label>
-          </div>
-        </div>
-      </div>
 
-      <!-- Notifications -->
-      <div id="notifications" class="bg-white rounded-lg shadow p-6 dark:bg-gray-800">
-        <div class="flex items-center mb-6">
-          <Bell class="h-6 w-6 text-yellow-600 ltr:mr-3 rtl:ml-3" />
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-            {$_('settings.notificationSettings')}
-          </h2>
-        </div>
-        
-        <div class="space-y-4">
-          <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg dark:border-gray-700">
-            <div>
-              <h3 class="font-medium text-gray-900 dark:text-white">{$_('settings.emailNotifications')}</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400">{$_('settings.emailNotificationsDescription')}</p>
+            <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg dark:border-gray-700">
+              <div>
+                <h3 class="font-medium text-gray-900 dark:text-white">{$_('settings.autoBackup')}</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{$_('settings.autoBackupDescription')}</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" name="autoBackup" bind:checked={systemSettings.autoBackup} class="sr-only peer" />
+                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+              </label>
             </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" bind:checked={systemSettings.emailNotifications} class="sr-only peer" />
-              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-            </label>
-          </div>
-          
-          <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg dark:border-gray-700">
-            <div>
-              <h3 class="font-medium text-gray-900 dark:text-white">{$_('settings.smsNotifications')}</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400">{$_('settings.smsNotificationsDescription')}</p>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" bind:checked={systemSettings.smsNotifications} class="sr-only peer" />
-              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-            </label>
           </div>
         </div>
-      </div>
 
-      <!-- Security -->
-      <div id="security" class="bg-white rounded-lg shadow p-6 dark:bg-gray-800">
-        <div class="flex items-center mb-6">
-          <Shield class="h-6 w-6 text-red-600 ltr:mr-3 rtl:ml-3" />
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-            {$_('settings.securitySettings')}
-          </h2>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label for="session-timeout" class="label">{$_('settings.sessionTimeout')}</label>
-            <input 
-              id="session-timeout"
-              type="number" 
-              bind:value={systemSettings.sessionTimeout}
-              min="15"
-              max="480"
-              class="input"
-            />
+        <!-- Display Settings -->
+        <div id="display" class="bg-white rounded-lg shadow p-6 dark:bg-gray-800">
+          <div class="flex items-center mb-6">
+            <Palette class="h-6 w-6 text-purple-600 ltr:mr-3 rtl:ml-3" />
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+              {$_('settings.displaySettings')}
+            </h2>
           </div>
-          
-          <div>
-            <label for="password-policy" class="label">{$_('settings.passwordPolicy')}</label>
-            <select id="password-policy" bind:value={systemSettings.passwordPolicy} class="input">
-              <option value="weak">{$_('settings.passwordPolicyWeak')}</option>
-              <option value="medium">{$_('settings.passwordPolicyMedium')}</option>
-              <option value="strong">{$_('settings.passwordPolicyStrong')}</option>
-            </select>
-          </div>
-          
-          <div>
-            <label for="login-attempts" class="label">{$_('settings.maxLoginAttempts')}</label>
-            <input 
-              id="login-attempts"
-              type="number" 
-              bind:value={systemSettings.loginAttempts}
-              min="3"
-              max="10"
-              class="input"
-            />
-          </div>
-          
-          <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg dark:border-gray-700">
-            <div>
-              <h3 class="font-medium text-gray-900 dark:text-white">{$_('settings.twoFactorAuth')}</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400">{$_('settings.twoFactorAuthDescription')}</p>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" bind:checked={systemSettings.twoFactorAuth} class="sr-only peer" />
-              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-            </label>
-          </div>
-        </div>
-      </div>
 
-      <!-- System Settings Save Button -->
-      <div class="flex justify-end">
-        <button
-          type="button"
-          on:click={saveSystemSettings}
-          class="btn-primary btn-lg"
-        >
-          <Save class="h-5 w-5 ltr:mr-2 rtl:ml-2" />
-          {$_('settings.saveSystemSettings')}
-        </button>
-      </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label for="default-language" class="label">{$_('settings.defaultLanguage')}</label>
+              <select id="default-language" name="defaultLanguage" bind:value={systemSettings.defaultLanguage} class="input">
+                <option value="ar">العربية (Arabic)</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="date-format" class="label">{$_('settings.dateFormat')}</label>
+              <select id="date-format" name="dateFormat" bind:value={systemSettings.dateFormat} class="input">
+                <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="time-format" class="label">{$_('settings.timeFormat')}</label>
+              <select id="time-format" name="timeFormat" bind:value={systemSettings.timeFormat} class="input">
+                <option value="24h">{$_('settings.24Hour')}</option>
+                <option value="12h">{$_('settings.12Hour')}</option>
+              </select>
+            </div>
+
+            <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg dark:border-gray-700">
+              <div>
+                <h3 class="font-medium text-gray-900 dark:text-white">{$_('settings.darkMode')}</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{$_('settings.darkModeDescription')}</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" name="darkMode" checked={$darkMode} on:change={toggleDarkMode} class="sr-only peer" />
+                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notifications -->
+        <div id="notifications" class="bg-white rounded-lg shadow p-6 dark:bg-gray-800">
+          <div class="flex items-center mb-6">
+            <Bell class="h-6 w-6 text-yellow-600 ltr:mr-3 rtl:ml-3" />
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+              {$_('settings.notificationSettings')}
+            </h2>
+          </div>
+
+          <div class="space-y-4">
+            <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg dark:border-gray-700">
+              <div>
+                <h3 class="font-medium text-gray-900 dark:text-white">{$_('settings.emailNotifications')}</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{$_('settings.emailNotificationsDescription')}</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" name="emailNotifications" bind:checked={systemSettings.emailNotifications} class="sr-only peer" />
+                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+
+            <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg dark:border-gray-700">
+              <div>
+                <h3 class="font-medium text-gray-900 dark:text-white">{$_('settings.smsNotifications')}</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{$_('settings.smsNotificationsDescription')}</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" name="smsNotifications" bind:checked={systemSettings.smsNotifications} class="sr-only peer" />
+                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Security -->
+        <div id="security" class="bg-white rounded-lg shadow p-6 dark:bg-gray-800">
+          <div class="flex items-center mb-6">
+            <Shield class="h-6 w-6 text-red-600 ltr:mr-3 rtl:ml-3" />
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+              {$_('settings.securitySettings')}
+            </h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label for="session-timeout" class="label">{$_('settings.sessionTimeout')}</label>
+              <input
+                id="session-timeout"
+                name="sessionTimeout"
+                type="number"
+                bind:value={systemSettings.sessionTimeout}
+                min="15"
+                max="480"
+                class="input"
+              />
+            </div>
+
+            <div>
+              <label for="password-policy" class="label">{$_('settings.passwordPolicy')}</label>
+              <select id="password-policy" name="passwordPolicy" bind:value={systemSettings.passwordPolicy} class="input">
+                <option value="weak">{$_('settings.passwordPolicyWeak')}</option>
+                <option value="medium">{$_('settings.passwordPolicyMedium')}</option>
+                <option value="strong">{$_('settings.passwordPolicyStrong')}</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="login-attempts" class="label">{$_('settings.maxLoginAttempts')}</label>
+              <input
+                id="login-attempts"
+                name="loginAttempts"
+                type="number"
+                bind:value={systemSettings.loginAttempts}
+                min="3"
+                max="10"
+                class="input"
+              />
+            </div>
+
+            <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg dark:border-gray-700">
+              <div>
+                <h3 class="font-medium text-gray-900 dark:text-white">{$_('settings.twoFactorAuth')}</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{$_('settings.twoFactorAuthDescription')}</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" name="twoFactorAuth" bind:checked={systemSettings.twoFactorAuth} class="sr-only peer" />
+                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Settings Save Button -->
+        <div class="flex justify-end">
+          <button
+            type="submit"
+            disabled={isSubmittingSystem}
+            class="btn-primary btn-lg"
+          >
+            {#if isSubmittingSystem}
+              <div class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent ltr:mr-2 rtl:ml-2"></div>
+              {$_('common.saving')}
+            {:else}
+              <Save class="h-5 w-5 ltr:mr-2 rtl:ml-2" />
+              {$_('settings.saveSystemSettings')}
+            {/if}
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>

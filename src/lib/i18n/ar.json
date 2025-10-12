@@ -199,7 +199,13 @@
     "noResults": "لم يتم العثور على نتائج",
     "noData": "لا توجد بيانات متاحة",
     "update": "تحديث",
-    "creating": "جاري الإنشاء..."
+    "creating": "جاري الإنشاء...",
+    "saving": "جاري الحفظ...",
+    "uploading": "جاري الرفع...",
+    "saveFailed": "فشل الحفظ",
+    "uploadFailed": "فشل الرفع",
+    "deleteFailed": "فشل الحذف",
+    "remove": "إزالة"
   },
   "dashboard": {
     "welcome": "مرحباً بك، {name}! إليك ما يحدث مع مخزونك.",
@@ -661,6 +667,23 @@
     "twoFactorAuth": "المصادقة الثنائية",
     "twoFactorAuthDescription": "تفعيل المصادقة الثنائية للأمان الإضافي",
     "saveSettings": "حفظ الإعدادات",
-    "settingsSaved": "تم حفظ الإعدادات بنجاح!"
+    "settingsSaved": "تم حفظ الإعدادات بنجاح!",
+    "companyLogo": "شعار الشركة",
+    "uploadLogo": "رفع الشعار",
+    "chooseFile": "اختر ملف",
+    "uploadNow": "رفع الآن",
+    "noLogo": "لم يتم رفع الشعار",
+    "logoRequirements": "PNG أو JPG أو JPEG. الحد الأقصى 2 ميجابايت.",
+    "logoUploadedSuccessfully": "تم رفع الشعار بنجاح!",
+    "logoRemovedSuccessfully": "تم حذف الشعار بنجاح!",
+    "confirmRemoveLogo": "هل أنت متأكد من حذف شعار الشركة؟",
+    "companyCity": "المدينة",
+    "companyState": "الولاية/المحافظة",
+    "companyZipCode": "الرمز البريدي",
+    "companyCountry": "البلد",
+    "companyTaxId": "الرقم الضريبي",
+    "companyWebsite": "الموقع الإلكتروني",
+    "saveCompanySettings": "حفظ إعدادات الشركة",
+    "saveSystemSettings": "حفظ إعدادات النظام"
   }
 }

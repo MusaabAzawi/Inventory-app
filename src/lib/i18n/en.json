@@ -199,7 +199,13 @@
     "noResults": "No results found",
     "noData": "No data available",
     "update": "Update",
-    "creating": "Creating..."
+    "creating": "Creating...",
+    "saving": "Saving...",
+    "uploading": "Uploading...",
+    "saveFailed": "Failed to save",
+    "uploadFailed": "Failed to upload",
+    "deleteFailed": "Failed to delete",
+    "remove": "Remove"
   },
   "dashboard": {
     "welcome": "Welcome back, {name}! Here's what's happening with your inventory.",
@@ -662,6 +668,23 @@
     "twoFactorAuth": "Two-Factor Authentication",
     "twoFactorAuthDescription": "Enable 2FA for extra security",
     "saveSettings": "Save Settings",
-    "settingsSaved": "Settings saved successfully!"
+    "settingsSaved": "Settings saved successfully!",
+    "companyLogo": "Company Logo",
+    "uploadLogo": "Upload Logo",
+    "chooseFile": "Choose File",
+    "uploadNow": "Upload Now",
+    "noLogo": "No logo uploaded",
+    "logoRequirements": "PNG, JPG or JPEG. Max 2MB.",
+    "logoUploadedSuccessfully": "Logo uploaded successfully!",
+    "logoRemovedSuccessfully": "Logo removed successfully!",
+    "confirmRemoveLogo": "Are you sure you want to remove the company logo?",
+    "companyCity": "City",
+    "companyState": "State/Province",
+    "companyZipCode": "Zip/Postal Code",
+    "companyCountry": "Country",
+    "companyTaxId": "Tax ID",
+    "companyWebsite": "Website",
+    "saveCompanySettings": "Save Company Settings",
+    "saveSystemSettings": "Save System Settings"
   }
 }

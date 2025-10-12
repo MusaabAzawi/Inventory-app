@@ -3,6 +3,7 @@ export default {
   content: [
     './src/**/*.{html,js,svelte,ts,css}', // Explicitly include CSS
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
