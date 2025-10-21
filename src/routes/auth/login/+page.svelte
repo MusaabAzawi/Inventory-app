@@ -5,6 +5,32 @@
   import LanguageSwitcher from '$lib/components/layout/LanguageSwitcher.svelte';
 
   export let form: ActionData;
+
+  let isSubmitting = $state(false);
+
+  function handleEnhance() {
+    return async ({ formData, cancel }: any) => {
+      // Prevent double submission
+      if (isSubmitting) {
+        cancel();
+        return;
+      }
+
+      // Ensure password field has a value
+      const password = formData.get('password');
+      if (!password || password.toString().trim() === '') {
+        cancel();
+        return;
+      }
+
+      isSubmitting = true;
+
+      return async ({ update }: any) => {
+        await update();
+        isSubmitting = false;
+      };
+    };
+  }
 </script>
 
 <div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
@@ -18,7 +44,7 @@
       </div>
     </div>
     
-    <form method="POST" use:enhance class="mt-8 space-y-6">
+    <form method="POST" use:enhance={handleEnhance} class="mt-8 space-y-6">
       {#if form?.error}
         <div class="bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded">
           {$_(form.error)}
@@ -61,8 +87,8 @@
         </a>
       </div>
 
-      <button type="submit" class="w-full btn-primary btn-lg">
-        {$_('auth.loginButton')}
+      <button type="submit" class="w-full btn-primary btn-lg" disabled={isSubmitting}>
+        {isSubmitting ? $_('auth.loggingIn') || 'Logging in...' : $_('auth.loginButton')}
       </button>
     </form>
   </div>

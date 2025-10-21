@@ -2,7 +2,7 @@
 // Run with: npx prisma db seed
 
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs'; // Use bcryptjs for better compatibility
+import bcrypt from 'bcrypt'; // Use bcrypt (same as the rest of the app)
 
 const prisma = new PrismaClient();
 
