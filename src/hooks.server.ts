@@ -9,7 +9,7 @@ const protectedRoutes = ['/dashboard', '/inventory', '/sales', '/purchases', '/c
 export const handle: Handle = async ({ event, resolve }) => {
   const startTime = Date.now();
   const session = event.cookies.get('session');
-  
+
   // Session validation
   if (session) {
     try {
@@ -18,7 +18,7 @@ export const handle: Handle = async ({ event, resolve }) => {
         const user = await prisma.user.findUnique({
           where: { id: tokenData.userId }
         });
-        
+
         if (user) {
           event.locals.user = {
             id: user.id,
@@ -35,7 +35,19 @@ export const handle: Handle = async ({ event, resolve }) => {
       event.cookies.delete('session', { path: '/' });
     }
   }
-  
+
+  // Route protection - check BEFORE resolving
+  if (protectedRoutes.some(route => event.url.pathname.startsWith(route))) {
+    if (!event.locals.user) {
+      throw redirect(302, '/auth/login');
+    }
+  }
+
+  // Redirect logged in users away from auth pages - check BEFORE resolving
+  if (event.url.pathname.startsWith('/auth/') && event.locals.user) {
+    throw redirect(302, '/dashboard');
+  }
+
   // Security headers
   const response = await resolve(event, {
     transformPageChunk: ({ html }) => {
@@ -46,18 +58,6 @@ export const handle: Handle = async ({ event, resolve }) => {
       return html;
     }
   });
-  
-  // Route protection
-  if (protectedRoutes.some(route => event.url.pathname.startsWith(route))) {
-    if (!event.locals.user) {
-      throw redirect(302, '/auth/login');
-    }
-  }
-  
-  // Redirect logged in users away from auth pages
-  if (event.url.pathname.startsWith('/auth/') && event.locals.user) {
-    throw redirect(302, '/dashboard');
-  }
   
   // Add security headers
   if (!dev) {
