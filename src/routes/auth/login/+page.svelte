@@ -1,20 +1,10 @@
 <script lang="ts">
   import { _ } from 'svelte-i18n';
   import { enhance } from '$app/forms';
-  import { goto } from '$app/navigation';
   import type { ActionData } from './$types';
   import LanguageSwitcher from '$lib/components/layout/LanguageSwitcher.svelte';
 
   export let form: ActionData;
-
-  function handleSubmit() {
-    return async ({ result }) => {
-      if (result.type === 'redirect') {
-        // Force navigation to dashboard
-        await goto('/dashboard');
-      }
-    };
-  }
 </script>
 
 <div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
@@ -28,7 +18,7 @@
       </div>
     </div>
     
-    <form method="POST" use:enhance={handleSubmit} class="mt-8 space-y-6">
+    <form method="POST" use:enhance class="mt-8 space-y-6">
       {#if form?.error}
         <div class="bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded">
           {$_(form.error)}
