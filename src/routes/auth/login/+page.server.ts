@@ -16,49 +16,17 @@ export const load: PageServerLoad = async ({ locals }) => {
 export const actions: Actions = {
   default: async ({ request, cookies }) => {
     const formData = await request.formData();
-    const email = formData.get('email');
-    const password = formData.get('password');
+    const email = formData.get('email')?.toString() || '';
+    const password = formData.get('password')?.toString() || '';
 
-    // Validate that form fields are present
-    if (!email || !password) {
-      return fail(400, {
-        email: email?.toString() || '',
-        error: 'auth.invalidCredentials'
-      });
-    }
-
-    const emailStr = email.toString().trim();
-    const passwordStr = password.toString();
-
-    // Validate input format
     try {
-      const validation = loginSchema.safeParse({ email: emailStr, password: passwordStr });
+      const { email: validEmail, password: validPassword } = loginSchema.parse({ email, password });
 
-      if (!validation.success) {
-        return fail(400, {
-          email: emailStr,
-          error: 'auth.invalidCredentials'
-        });
-      }
-
-      const { email: validEmail, password: validPassword } = validation.data;
-
-      // Find user
       const user = await prisma.user.findUnique({
         where: { email: validEmail }
       });
 
-      // Verify credentials
-      if (!user) {
-        return fail(400, {
-          email: validEmail,
-          error: 'auth.invalidCredentials'
-        });
-      }
-
-      const isPasswordValid = await bcrypt.compare(validPassword, user.password);
-
-      if (!isPasswordValid) {
+      if (!user || !await bcrypt.compare(validPassword, user.password)) {
         return fail(400, {
           email: validEmail,
           error: 'auth.invalidCredentials'
@@ -67,7 +35,7 @@ export const actions: Actions = {
 
       // Create session token
       const sessionToken = createSessionToken(user.id);
-
+      
       cookies.set('session', sessionToken, {
         path: '/',
         httpOnly: true,
@@ -78,16 +46,11 @@ export const actions: Actions = {
 
       throw redirect(302, '/dashboard');
     } catch (error) {
-      // Re-throw redirect errors
       if (error instanceof Error && 'status' in error) {
         throw error;
       }
-
-      // Log unexpected errors in development
-      console.error('Login error:', error);
-
       return fail(400, {
-        email: emailStr,
+        email,
         error: 'auth.invalidCredentials'
       });
     }
