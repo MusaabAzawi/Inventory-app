@@ -1,15 +1,20 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import { _ } from 'svelte-i18n';
-  import { Menu, X, Bell, User, LogOut } from 'lucide-svelte';
+  import { Menu, X, Bell, User, LogOut, Moon, Sun } from 'lucide-svelte';
   import LanguageSwitcher from './LanguageSwitcher.svelte';
-  
+  import { darkMode } from '$lib/stores/darkMode';
+
   export let sidebarOpen = false;
-  
+
   let userMenuOpen = false;
-  
+
   function toggleSidebar() {
     sidebarOpen = !sidebarOpen;
+  }
+
+  function toggleDarkMode() {
+    darkMode.toggle();
   }
 </script>
 
@@ -41,7 +46,20 @@
       <!-- Right side items -->
       <div class="flex items-center gap-4">
         <LanguageSwitcher />
-        
+
+        <!-- Dark Mode Toggle -->
+        <button
+          on:click={toggleDarkMode}
+          class="p-3 text-gray-400 hover:text-gray-500 dark:text-gray-300 dark:hover:text-gray-200 touch-manipulation min-w-[44px] min-h-[44px] rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          aria-label="Toggle dark mode"
+        >
+          {#if $darkMode}
+            <Sun class="h-5 w-5" />
+          {:else}
+            <Moon class="h-5 w-5" />
+          {/if}
+        </button>
+
         <!-- Notifications -->
         <button class="p-3 text-gray-400 hover:text-gray-500 relative touch-manipulation min-w-[44px] min-h-[44px] rounded-md hover:bg-gray-100 dark:hover:bg-gray-700" aria-label="Notifications">
           <Bell class="h-5 w-5" />
