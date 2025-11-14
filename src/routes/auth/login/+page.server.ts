@@ -35,7 +35,7 @@ export const actions: Actions = {
 
       // Create session token
       const sessionToken = createSessionToken(user.id);
-      
+
       cookies.set('session', sessionToken, {
         path: '/',
         httpOnly: true,
@@ -46,9 +46,11 @@ export const actions: Actions = {
 
       throw redirect(302, '/dashboard');
     } catch (error) {
-      if (error instanceof Error && 'status' in error) {
+      // Rethrow redirects and other SvelteKit responses (they have a status property)
+      if (error && typeof error === 'object' && 'status' in error) {
         throw error;
       }
+      // For unexpected errors, return failure
       return fail(400, {
         email,
         error: 'auth.invalidCredentials'
