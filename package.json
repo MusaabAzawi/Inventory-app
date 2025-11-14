@@ -37,6 +37,7 @@
     "@tailwindcss/vite": "^4.1.12",
     "@types/bcrypt": "^5.0.2",
     "autoprefixer": "^10.4.20",
+    "better-sqlite3": "^12.4.1",
     "chart.js": "^4.4.6",
     "postcss": "^8.4.49",
     "prisma": "^5.22.0",
