@@ -3,7 +3,7 @@ import type { Actions, PageServerLoad } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
 import { createSessionToken } from '$lib/server/auth';
 import { prisma } from '$lib/server/db';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { loginSchema } from '$lib/utils/validators';
 
 export const load: PageServerLoad = async ({ locals }) => {
